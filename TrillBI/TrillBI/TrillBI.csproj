@@ -57,8 +57,8 @@
     <Reference Include="Microsoft.StreamProcessing, Version=1.0.0.0, Culture=neutral, PublicKeyToken=0695e91d4f0d7afa, processorArchitecture=MSIL">
       <HintPath>..\packages\Trill.2020.7.31.2\lib\netstandard2.0\Microsoft.StreamProcessing.dll</HintPath>
     </Reference>
-    <Reference Include="RxSockets, Version=2.0.0.146, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\RxSockets.2.0.0\lib\netstandard2.0\RxSockets.dll</HintPath>
+    <Reference Include="RxSockets, Version=2.0.6.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\RxSockets.2.0.6\lib\netstandard2.0\RxSockets.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
