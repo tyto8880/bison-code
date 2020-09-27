@@ -11,9 +11,17 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace TrillBI {
-    class Testing {
-        // making async socket
-        static async Task StartListener(String ip, int port, IObserver<LocationData> observer) {
+    class SocketObservableMaker {
+        //private IObservable<LocationData> data;
+        private string ip;
+        private int port;
+
+        public SocketObservableMaker(string ip, int port) {
+            this.ip = ip;
+            this.port = port;
+        }
+
+        private static async Task StartListener(string ip, int port, IObserver<LocationData> observer) {
             IPAddress ipAddress = IPAddress.Parse(ip);
             IPEndPoint localEndpoint = new IPEndPoint(ipAddress, port);
             int index = 0;
@@ -31,7 +39,7 @@ namespace TrillBI {
             }
         }
 
-        static async Task HandleClient(TcpListener server, IObserver<LocationData> observer) {
+        private static async Task HandleClient(TcpListener server, IObserver<LocationData> observer) {
             byte[] bytes;
             int bytesRead;
             string bytesString;
@@ -50,20 +58,27 @@ namespace TrillBI {
             index += 1;
         }
 
-        public static async Task Main(string[] args) {
-            string ip = "127.0.0.1";
-            int port = 8000;
-            IObservable<LocationData> data = Observable.Create<LocationData>(
-                observer => {
-                    StartListener(ip, port, observer);
+        public IObservable<LocationData> CreateObservable() {
+            var data = Observable.Create<LocationData>(
+                async observer => {
+                    await StartListener(ip, port, observer);
                     //observer.OnCompleted();
                     return Disposable.Create(() => Console.WriteLine("Unsubscribed"));
                 });
 
-            // d => Console.WriteLine(d), () => Console.WriteLine("Sequence Completed.")
+            return data;
+        }
 
-            //LocationData[] data = { new LocationData(40, 40, 1) };
-            //IObservable <LocationData> thing = data.ToObservable();
+        public static async Task eMain() {
+            string ip = "127.0.0.1";
+            int port = 8000;
+
+            IObservable<LocationData> data = Observable.Create<LocationData>(
+                async observer => {
+                    await StartListener(ip, port, observer);
+                    //observer.OnCompleted();
+                    return Disposable.Create(() => Console.WriteLine("Unsubscribed"));
+                });
 
             var inputStream = data.Select(r => {
                 //Console.WriteLine(r);
@@ -76,6 +91,7 @@ namespace TrillBI {
             Console.WriteLine("Done. Press ENTER to terminate");
             Console.ReadLine();
         }
+
         private static LocationData ParseInput(string input, long time) {
             string[] values = input.Split(new string[] { ", " }, StringSplitOptions.None);
             //Console.WriteLine(values[0] + ", " + values[1]);
