@@ -34,29 +34,12 @@ namespace TrillBI {
 
             IObservable<LocationData> source = Observable.Create<LocationData>(
                 observer => {
-                    ThreadedIngress ingress = new ThreadedIngress(observer, ip, port);
-                    Thread ingressThread = new Thread(new ThreadStart(ingress.Ingress));
-                    ingressThread.Start();
-                    //ingressThread.Join();
+                    ThreadedListener listener = new ThreadedListener(ip, port, observer);
+                    Thread listenerThread = new Thread(new ThreadStart(listener.StartListener));
+                    listenerThread.Start();
 
-                    //ThreadedIngress ingress = new ThreadedIngress(observer, new LocationData { Latitude = 1, Longitude = 1, StartTime = DateTime.Now });
-                    //Thread ingressThread = new Thread(new ThreadStart(ingress.Ingress));
-                    //ingressThread.Start();
-                    //ingressThread.Join();
-
-                    //observer.OnCompleted();
                     return Disposable.Create(() => Console.WriteLine("Unsubscribed"));
                 });
-            //IObservable<PerformanceCounterSample> source = Observable.Create<PerformanceCounterSample>(
-            //    observer => {
-            //        ThreadedIngressDemo ingress = new ThreadedIngressDemo(observer);
-            //        Thread AddToObserver = new Thread(new ThreadStart(ingress.Sample));
-            //        AddToObserver.Start();
-
-            //        //observer.OnNext(new PerformanceCounterSample { StartTime = startTime, Value = 2 });
-            //        //observer.OnNext(new PerformanceCounterSample { StartTime = startTime, Value = 3 });
-            //        return Disposable.Create(() => Console.WriteLine("Unsubscribed"));
-            //    });
 
             var inputStream = 
                 source.Select(e => StreamEvent.CreateStart(e.StartTime.Ticks, e))
@@ -64,7 +47,9 @@ namespace TrillBI {
                             FlushPolicy.FlushOnPunctuation,
                             PeriodicPunctuationPolicy.Time((ulong)TimeSpan.FromSeconds(1).Ticks));
 
-            //var query1 = inputStream.Where(e => e.longitude == 40 || e.longitude == 50);
+            var query1 = inputStream.Where(e => e.Latitude == 40.12071);
+
+            //inputStream.ToStreamEventObservable().ForEachAsync(m => WriteEvent(m));
             inputStream.ToStreamEventObservable().ForEachAsync(m => WriteEvent(m));
 
             //Console.WriteLine("Done. Press ENTER to terminate");

@@ -1,35 +1,26 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace TrillBI {
-    class ThreadedIngress {
-        private IObserver<LocationData> observer;
-        private string ip;
-        private int port;
-        public ThreadedIngress(IObserver<LocationData> observer, string ip, int port) {
-            this.observer = observer;
-            this.ip = ip;
-            this.port = port;
-        }
-        public void Ingress() {
-            ThreadedListener listener = new ThreadedListener(ip, port, observer);
-            Thread listenerThread = new Thread(new ThreadStart(listener.StartListener));
-            listenerThread.Start();
-            //while (true) {
-
-            //    observer.OnNext(new LocationData { Latitude = 1, Longitude = 1, StartTime = DateTime.Now });
-            //    Thread.Sleep(500);
-            //}
-        }
-    }
+    //class ThreadedIngress {
+    //    private IObserver<LocationData> observer;
+    //    private string ip;
+    //    private int port;
+    //    public ThreadedIngress(IObserver<LocationData> observer, string ip, int port) {
+    //        this.observer = observer;
+    //        this.ip = ip;
+    //        this.port = port;
+    //    }
+    //    public void Ingress() {
+    //        //ThreadedListener listener = new ThreadedListener(ip, port, observer);
+    //        //Thread listenerThread = new Thread(new ThreadStart(listener.StartListener));
+    //        //listenerThread.Start();
+    //    }
+    //}
     class ThreadedListener {
-        //private LocationData data;
         private string ip;
         private int port;
         private IObserver<LocationData> observer;
@@ -88,14 +79,6 @@ namespace TrillBI {
                 Console.WriteLine(e.ToString());
             }
         }
-
-        //public void Sample() {
-        //    while (true) {
-        //        var startTime = DateTime.Now;
-        //        observer.OnNext(new LocationData(1, 1, 1));
-        //        Thread.Sleep(1000);
-        //    }
-        //}
 
         private static LocationData ParseInput(string input, long time) {
             string[] values = input.Split(new string[] { ", " }, StringSplitOptions.None);
