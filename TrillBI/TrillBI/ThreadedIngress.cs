@@ -81,7 +81,7 @@ namespace TrillBI {
                     //ThreadedIngress threadedIngress = new ThreadedIngress(observer, new LocationData { Latitude = 1, Longitude = 1, StartTime = DateTime.Now });
                     //Thread ingress = new Thread(new ThreadStart(threadedIngress.Ingress));
                     //ingress.Start();
-                    break;
+                    //break;
                     index += 1;
                 }
             } catch (Exception e) {

@@ -65,10 +65,10 @@ namespace TrillBI {
                             PeriodicPunctuationPolicy.Time((ulong)TimeSpan.FromSeconds(1).Ticks));
 
             //var query1 = inputStream.Where(e => e.longitude == 40 || e.longitude == 50);
-            inputStream.ToStreamEventObservable().ForEachAsync(m => WriteEvent(m)).Wait();
+            inputStream.ToStreamEventObservable().ForEachAsync(m => WriteEvent(m));
 
-            Console.WriteLine("Done. Press ENTER to terminate");
-            Console.ReadLine();
+            //Console.WriteLine("Done. Press ENTER to terminate");
+            //Console.ReadLine();
         }
 
         private static void WriteEvent<T>(StreamEvent<T> e) {
