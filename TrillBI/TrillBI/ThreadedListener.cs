@@ -1,8 +1,7 @@
 ﻿using System;
+using System.Text;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
-using System.Threading;
 
 namespace TrillBI {
     //class ThreadedIngress {
@@ -31,6 +30,10 @@ namespace TrillBI {
             this.observer = observer;
         }
 
+        /* 
+         * Mostly a normal blocking socket listener
+         * 
+         */
         public void StartListener() {
             byte[] bytes;
             IPAddress ipAddress = IPAddress.Parse(ip);
@@ -83,7 +86,7 @@ namespace TrillBI {
         private static LocationData ParseInput(string input, long time) {
             string[] values = input.Split(new string[] { ", " }, StringSplitOptions.None);
             //Console.WriteLine(values[0] + ", " + values[1]);
-            return new LocationData { Latitude = Convert.ToDouble(values[0]), Longitude = Convert.ToDouble(values[1]), StartTime = DateTime.Now };
+            return new LocationData(DateTime.Now, Convert.ToDouble(values[0]), Convert.ToDouble(values[1]));
         }
     }
 }

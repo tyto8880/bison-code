@@ -132,7 +132,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Demo.cs" />
-    <Compile Include="ThreadedIngress.cs" />
+    <Compile Include="ThreadedListener.cs" />
     <Compile Include="TrillBI.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
