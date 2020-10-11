@@ -4,7 +4,7 @@
 ## Documentation
 This illustrates the intricasies of the Kafka sorting demo found in the KafKaEventSorter directory.
 
-### Basic Kafka Console Operations
+### Basic Kafka Console Operations:
 
 This section covers the provided console interface for Apache Kafka. In these examples, I have named the installation folder for my kafka as "Kafka" this directory may change for you. Also, if running this on linux/mac change the intitial directory specification from bin\windows to just bin/<program_name>.sh
 
@@ -17,7 +17,7 @@ START KAFKA SERVER @ localhost:9092
 CREATE A TOPIC CALLED <topic_name>  
 <pre><code>...\Kafka\bin\windows\kafka-topics.bat --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic <topic_name> </code></pre>
 
-CHECK CURRENT TOPICS  
+DISPLAY EXISTING TOPICS  
 <pre><code>...\Kafka>bin\windows\kafka-topics.bat --list --bootstrap-server localhost:9092 </code></pre>
 
 GENERATE CONSOLE CONSUMER FOR GIVEN <topic_name> & DISPLAY ALL PREVIOUS CONTENTS  
@@ -25,5 +25,18 @@ GENERATE CONSOLE CONSUMER FOR GIVEN <topic_name> & DISPLAY ALL PREVIOUS CONTENTS
 
 GENERATE CONSOLE PRODUCER FOR GIVEN <topic_name>  
 <pre><code>...\Kafka>bin\windows\kafka-console-producer.bat --topic all-event-data --broker-list localhost:9092 --property "parse.key=true" --property "key.separator=:" </code></pre>
-NOTE: This opens up a connection where you can input a key value pair to the specified
+`NOTE:` This opens up a connection where you can input a key value pair to the specified
 topic with the syntax key:value
+
+### File and Demo Program Explanation:
+
+### How To Run The Demo:
+This section details how to run the demo so that the funcitonality is clearly displayed.
+`NOTE:` This demonstration was created using the IntelliJ IDEA. If you wish to compile/run this demo without using and IDE, you must run/compile with proper specifications for a Maven project.   
+
+- Start Zookeeper and Kafka server  
+- Run CreateTopics.bat (if running linux/mac you can simply update this file to adhere to the shell you are using)  
+- Run ProduceData.java  
+- Run MainDataRouting.java  
+- Generate a console consumer for the topic you wish to view using the command provided above  
+- Rerun ProduceData.java with the console consumer active to see the routing  take place
