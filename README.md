@@ -43,7 +43,7 @@ This section details how to run the demo so that the funcitonality is clearly di
 - Rerun ProduceData.java with the console consumer active to see the routing  take place
 
 
-### File and Demo Program Explanation:
+### File and Implementation Explanation:
 #### CreateTopics.bat
 This is a simple batch file that uses the topic creation command listed above. The topics created are; type-A, type-B, type-C, type-D, type-E, and type-pos. These topics directly correlate to the specified event types outlined in the specified use cases. For example, the demo will route all type A events to the Kafka topic 'type-A'.  
 `NOTE:` For this file to be effective, you must have Zookeeper and a Kafka server currently running. This file need only be run one time; the topics persist across restarts of the Kafka server and zookeeper server. If you delete the log files from zookeeper and kafka server this persistence is lost.  
