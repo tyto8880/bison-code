@@ -16,7 +16,7 @@ call bin\windows\kafka-topics.bat --create --zookeeper localhost:2181 --replicat
  --partitions 1 --topic all-event-data
 ::
 call bin\windows\kafka-topics.bat --create --zookeeper localhost:2181 --replication-factor 1^
- --partitions 1 --topic type-A
+ --partitions 1 --topic temporal-events
 ::
 call bin\windows\kafka-topics.bat --create --zookeeper localhost:2181 --replication-factor 1^
  --partitions 1 --topic type-B

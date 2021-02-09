@@ -43,7 +43,7 @@ public class MainDataRouting {
                 (key, value) -> key.equalsIgnoreCase("100")
                 );
         
-        branches[0].to("type-A");
+        branches[0].to("temporal-event");
         branches[1].to("type-B");
         branches[2].to("type-C");
         branches[3].to("type-D");
