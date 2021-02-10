@@ -59,10 +59,6 @@ public class MainDataRouting {
         final KafkaStreams streams = new KafkaStreams(ingressTopology, streamProps);
 
 
-
-        TemporalProcessor tempProc = new TemporalProcessor();
-        Thread tTemp = new Thread(() -> tempProc.watchRecordsAndProcess());
-
         // Close the streams client when user throws an interrupt with ctrl-c
         final CountDownLatch latch = new CountDownLatch(1);
         Runtime.getRuntime().addShutdownHook(new Thread("MainDataRouting-shutdown-hook") {
@@ -79,5 +75,10 @@ public class MainDataRouting {
         } catch (Throwable e) {
             System.exit(1);
         }
+
+        // TemporalProcessor tempProc = new TemporalProcessor();
+        // Thread tTemp = new Thread(() -> tempProc.watchRecordsAndProcess());
+        // tTemp.start();
+
     }
 }

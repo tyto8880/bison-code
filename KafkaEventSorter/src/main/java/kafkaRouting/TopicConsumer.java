@@ -30,7 +30,8 @@ public class TopicConsumer {
     // Constructor: Set connection parameters and initialize a Kafka consumer that subscribes to the specified topic
     TopicConsumer(String topic) {
         // Set connection parameters
-        connectionProp.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
+        // connectionProp.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
+        connectionProp.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         connectionProp.put(ConsumerConfig.GROUP_ID_CONFIG, "TopicConsumer");
         connectionProp.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         connectionProp.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
@@ -41,7 +42,7 @@ public class TopicConsumer {
     }
 
     public ConsumerRecords<String,String> getConsumerRecords() {
-        ConsumerRecords<String,String> records = kCons.poll(1000);
+        final ConsumerRecords<String,String> records = kCons.poll(1000);
         kCons.commitAsync();
         return records;
     }

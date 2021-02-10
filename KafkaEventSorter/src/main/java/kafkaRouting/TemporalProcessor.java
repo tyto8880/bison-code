@@ -13,6 +13,7 @@ public class TemporalProcessor {
         masterRecord = consumer.getConsumerRecords();
     }
     public void watchRecordsAndProcess() {
+        System.out.println("updating record");
         Thread t1 = new Thread( () -> timeSensitive("A","B", this.testMillis) );
         Thread t2 = new Thread( () -> multipleOccurences("A", this.testMillis, 3) );
 
@@ -20,6 +21,7 @@ public class TemporalProcessor {
         t2.start();
 
         while (true) {
+            System.out.println("updating record");
             masterRecord = consumer.getConsumerRecords();
         }
     }
