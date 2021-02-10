@@ -93,7 +93,7 @@ public class TemporalProcessor {
             for (ConsumerRecord<String,String> record : records) {
                 ts = parseRecord(record.value());
                 if (ts.eventType.equals(eventA) && (tsQueue.size() == 0 || tsQueue.getLast().time != ts.time)) {
-                    System.out.println("added an " + eventA + " at time " + Long.toString(ts.time));
+                    // System.out.println("added an " + eventA + " at time " + Long.toString(ts.time));
                     tsQueue.add(ts);
                 }
                 if (tsQueue.getFirst().time - ts.time > millis) {
