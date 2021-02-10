@@ -30,6 +30,7 @@ public class TopicConsumer {
     // Constructor: Set connection parameters and initialize a Kafka consumer that subscribes to the specified topic
     TopicConsumer(String topic) {
         // Set connection parameters
+        connectionProp = new Properties();
         // connectionProp.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
         connectionProp.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         connectionProp.put(ConsumerConfig.GROUP_ID_CONFIG, "TopicConsumer");
