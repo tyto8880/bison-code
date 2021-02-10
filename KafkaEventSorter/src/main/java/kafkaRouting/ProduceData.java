@@ -11,7 +11,7 @@ import java.util.Properties;
 /*
  * =====================================================================================================================
  *  This file creates a new kafka producer that then sends data over the main data stream (ie. into the all-event-data
- *  topic). This producer sends 1 of each event type over the stream.
+ *  topic). This producer sends 1 of each event type over the stream. Used ONLY for testing system routing capabilities.
  *          NOTE: For this file to function properly, it must be run alongside an active instance of zookeeper,
  *                the kafka server, and MainDataRouting.
  * =====================================================================================================================
