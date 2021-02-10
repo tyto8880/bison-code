@@ -92,60 +92,21 @@ public class TemporalProcessor {
             records = this.masterRecord;
             for (ConsumerRecord<String,String> record : records) {
                 ts = parseRecord(record.value());
-                
-                for (Timestamp t : tsQueue) {
-                    if (t.time - ts.time > millis) {
-                        tsQueue.pop(t);
-                    }
+                if (ts.eventType.equals(eventA) && (tsQueue.size() == 0 || tsQueue.getLast().time != ts.time)) {
+                    System.out.println("added an " + eventA + " at time " + Long.toString(ts.time));
+                    tsQueue.add(ts);
                 }
-                if (ts.eventType.equals(eventA) && ) {
-                    //add to queue
+                if (tsQueue.getFirst().time - ts.time > millis) {
+                    tsQueue.remove();
+                }
+                if (tsQueue.size() >= n) {
+                    System.out.println("Event " + eventA + " happened for the " + Integer.toString(n) + "th time within " + Long.toString(millis) + " ms!");
+
+                    tsQueue.remove();
                 }
                 // A,,,,,A,,,AA
                 // A,,,,,A,A
-                // if (ts.eventType.equals(eventA) && ts.time != currentTs.time) {
-                //     if (currentTs.time - ts.time > millis) {
-                //         System.out.println("mo Timeout");
-                //         seenOnce = false;
-                //         timesLeft = n;
-                //     }
-                //     currentTs = ts;
-                //     if (!seenOnce) {
-                //         seenOnce = true;
-                //         timesLeft -= 1;
-                //         aTime = ts.time;
-                //     }
-                //     if (seenOnce && ts.time != aTime) {
-                //         timesLeft -= 1;
-                //         if (timesLeft <= 0) {
-                //             timesLeft = n;
-                //             seenOnce = false;
-                //             System.out.println("Event " + eventA + " happened for the " + Integer.toString(n) + "th time within " + Long.toString(millis) + " ms!");
-                //         }
-                //     }
-                // }
             }
-            // foreach record
-            // records.forEach(record -> {
-            //     Timestamp ts = parseRecord(record.value());
-            //     if (!seenOnce && ts.eventType == eventA) {
-            //         seenOnce = true;
-            //         timesLeft -= 1;
-            //         aTime = ts.time;
-            //     }
-            //     if (aTime - ts.time > millis) {
-            //         seenOnce = false;
-            //         timesLeft = n;
-            //     }
-            //     if (seenOnce && ts.eventType == eventA) {
-            //         timesLeft -= 1;
-            //         if (timesLeft <= 0) {
-            //             timesLeft = n;
-            //             seenOnce = false;
-            //             System.out.println("Event " + eventA + " happened for the " + Integer.toString(n) + "th time within " + Long.toString(millis) + " ms!");
-            //         }
-            //     }
-            // });
         }
     }
 }
