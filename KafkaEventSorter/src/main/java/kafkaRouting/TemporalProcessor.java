@@ -1,5 +1,7 @@
 package kafkaRouting;
 
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+
 public class TemporalProcessor {
     private TopicConsumer consumer;
     private ConsumerRecords<String,String> masterRecord;
@@ -9,12 +11,12 @@ public class TemporalProcessor {
         TopicConsumer consumer = new TopicConsumer("temporal-event");
         masterRecord = consumer.getConsumerRecords();
     }
-    watchRecordsAndProcess() {
+    void watchRecordsAndProcess() {
         Thread t1 = new Thread( () -> timeSensitive("A","B", this.testMillis) );
         Thread t2 = new Thread( () -> multipleOccurences("A", this.testMillis, 3) );
 
-        t1.start()
-        t2.start()
+        t1.start();
+        t2.start();
 
         while (true) {
             masterRecord = consumer.getConsumerRecords();
@@ -22,10 +24,10 @@ public class TemporalProcessor {
     }
     Timestamp parseRecord(String event) {
         String[] splitData = event.split("\\s+");
-        return new Timestamp(splitData[0], Integer.parseInt(splitData[1])
+        return new Timestamp(splitData[0], Integer.parseInt(splitData[1]));
     }
 
-    timeSensitive(String eventA, String eventB, int millis) {
+    void timeSensitive(String eventA, String eventB, int millis) {
         boolean foundA = false;
         int aTime = 0;
         while (true) {
@@ -44,10 +46,10 @@ public class TemporalProcessor {
                     foundA = false;
                     System.out.println(eventA + " happened at timestamp " + Integer.toString(aTime) + " and " + eventB + " happened at timestamp " + Integer.toString(ts.time) + " (within " + Integer.toString(millis) + " ms)");
                 }
-            }
+            });
         }
     }
-    multipleOccurences(String eventA, int millis, int n) {
+    void multipleOccurences(String eventA, int millis, int n) {
         int timesLeft = n;
         boolean seenOnce = false;
         while (true) {
@@ -71,16 +73,16 @@ public class TemporalProcessor {
                         seenOnce = false;
                         System.out.println("Event " + eventA + " happened for the " + Integer.toString(n) + "th time within " + Integer.toString(millis) + " ms!");
                     }
-
                 }
+            });
         }
     }
 }
 
-public class Timestamp {
+class Timestamp {
     public String eventType;
     public int time;
-    Timestamp(string eventType, int time) {
+    Timestamp(String eventType, int time) {
         this.eventType = eventType;
         this.time = time;
     }
