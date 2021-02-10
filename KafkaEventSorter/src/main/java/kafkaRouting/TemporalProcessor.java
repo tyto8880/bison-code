@@ -10,8 +10,8 @@ public class TemporalProcessor {
         masterRecord = consumer.getConsumerRecords();
     }
     watchRecordsAndProcess() {
-        Thread t1 = new Thread( () -> multipleOccurences("A","B", this.testseconds) );
-        Thread t2 = new Thread( () -> timeSensitive("A", "B", this.testseconds, 5) );
+        Thread t1 = new Thread( () -> timeSensitive("A","B", this.testseconds) );
+        Thread t2 = new Thread( () -> multipleOccurences("A", this.testseconds, 3) );
 
         t1.start()
         t2.start()
@@ -29,26 +29,50 @@ public class TemporalProcessor {
         boolean foundA = false;
         int aTime = 0;
         while (true) {
-            record = this.masterRecord;
+            records = this.masterRecord;
             // foreach record
-            Timestamp ts = parseRecord(record.value);
-            if (!foundA && ts.eventType == "A") {
-                foundA = true;
-                aTime = ts.time;
-                continue;
-            }
-            if (aTime - ts.time > seconds) {
-                foundA = false;
-            }
-            if (foundA && ts.eventType == "B") {
-                foundA = false;
-                System.out.println(eventA + " happened at timestamp " + Integer.toString(aTime) + " and " + eventB + " happened at timestamp " + Integer.toString(ts.time) + " (within " + seconds + " seconds)");
+            records.forEach(record -> {
+                Timestamp ts = parseRecord(record.value);
+                if (!foundA && ts.eventType == eventA) {
+                    foundA = true;
+                    aTime = ts.time;
+                }
+                if (aTime - ts.time > seconds) {
+                    foundA = false;
+                }
+                if (foundA && ts.eventType == eventB) {
+                    foundA = false;
+                    System.out.println(eventA + " happened at timestamp " + Integer.toString(aTime) + " and " + eventB + " happened at timestamp " + Integer.toString(ts.time) + " (within " + seconds + " seconds)");
+                }
             }
         }
     }
-    multipleOccurences(String eventA, String eventB, int seconds, int n) {
+    multipleOccurences(String eventA, int seconds, int n) {
+        int timesLeft = n;
+        boolean seenOnce = false;
         while (true) {
-            record = this.masterRecord;
+            records = this.masterRecord;
+            // foreach record
+            records.forEach(record -> {
+                Timestamp ts = parseRecord(record.value);
+                if (!seenOnce && ts.eventType == eventA) {
+                    seenOnce = true;
+                    timesLeft -= 1;
+                    aTime = ts.time;
+                }
+                if (aTime - ts.time > seconds) {
+                    seenOnce = false;
+                    timesLeft = n;
+                }
+                if (seenOnce && ts.eventType == eventA) {
+                    timesLeft -= 1;
+                    if (timesLeft <= 0) {
+                        timesLeft = n;
+                        seenOnce = false;
+                        System.out.println("Event " + eventA + " happened for the " + Integer.parseInt(n) + "th time within " + Integer.parseInt(seconds) + " seconds!");
+                    }
+
+                }
         }
     }
 }
