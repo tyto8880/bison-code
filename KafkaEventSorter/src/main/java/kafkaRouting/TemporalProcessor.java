@@ -3,15 +3,15 @@ package kafkaRouting;
 public class TemporalProcessor {
     private TopicConsumer consumer;
     private ConsumerRecords<String,String> masterRecord;
-    private int testseconds = 8;
+    private int testMillis = 8000;
 
     TemporalProcessor() {
         TopicConsumer consumer = new TopicConsumer("temporal-event");
         masterRecord = consumer.getConsumerRecords();
     }
     watchRecordsAndProcess() {
-        Thread t1 = new Thread( () -> timeSensitive("A","B", this.testseconds) );
-        Thread t2 = new Thread( () -> multipleOccurences("A", this.testseconds, 3) );
+        Thread t1 = new Thread( () -> timeSensitive("A","B", this.testMillis) );
+        Thread t2 = new Thread( () -> multipleOccurences("A", this.testMillis, 3) );
 
         t1.start()
         t2.start()
@@ -25,7 +25,7 @@ public class TemporalProcessor {
         return new Timestamp(splitData[0], Integer.parseInt(splitData[1])
     }
 
-    timeSensitive(String eventA, String eventB, int seconds) {
+    timeSensitive(String eventA, String eventB, int millis) {
         boolean foundA = false;
         int aTime = 0;
         while (true) {
@@ -37,17 +37,17 @@ public class TemporalProcessor {
                     foundA = true;
                     aTime = ts.time;
                 }
-                if (aTime - ts.time > seconds) {
+                if (aTime - ts.time > millis) {
                     foundA = false;
                 }
                 if (foundA && ts.eventType == eventB) {
                     foundA = false;
-                    System.out.println(eventA + " happened at timestamp " + Integer.toString(aTime) + " and " + eventB + " happened at timestamp " + Integer.toString(ts.time) + " (within " + seconds + " seconds)");
+                    System.out.println(eventA + " happened at timestamp " + Integer.toString(aTime) + " and " + eventB + " happened at timestamp " + Integer.toString(ts.time) + " (within " + Integer.toString(millis) + " ms)");
                 }
             }
         }
     }
-    multipleOccurences(String eventA, int seconds, int n) {
+    multipleOccurences(String eventA, int millis, int n) {
         int timesLeft = n;
         boolean seenOnce = false;
         while (true) {
@@ -60,7 +60,7 @@ public class TemporalProcessor {
                     timesLeft -= 1;
                     aTime = ts.time;
                 }
-                if (aTime - ts.time > seconds) {
+                if (aTime - ts.time > millis) {
                     seenOnce = false;
                     timesLeft = n;
                 }
@@ -69,7 +69,7 @@ public class TemporalProcessor {
                     if (timesLeft <= 0) {
                         timesLeft = n;
                         seenOnce = false;
-                        System.out.println("Event " + eventA + " happened for the " + Integer.parseInt(n) + "th time within " + Integer.parseInt(seconds) + " seconds!");
+                        System.out.println("Event " + eventA + " happened for the " + Integer.toString(n) + "th time within " + Integer.toString(millis) + " ms!");
                     }
 
                 }

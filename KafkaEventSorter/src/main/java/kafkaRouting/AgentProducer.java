@@ -36,7 +36,7 @@ public class AgentProducer {
     // stream.
     public void sendTemporal(String eventType) {
         System.out.println("Sending event type: " + eventType);
-        String payload = eventType.toUpperCase() + "      TS:" + new Date();
+        String payload = eventType.toUpperCase() + "      TS:" + Integer.toString(System.currentTimeMillis());
         ProducerRecord<String, String> record = new ProducerRecord<String,String>("all-event-data", Integer.toString(0), payload);
         kProd.send(record);
     }
