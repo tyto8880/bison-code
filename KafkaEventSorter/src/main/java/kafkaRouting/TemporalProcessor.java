@@ -81,6 +81,9 @@ public class TemporalProcessor {
         }
     }
     void multipleOccurences(String eventA, long millis, int n) {
+        if (n <= 0) {
+            n = 1;
+        }
         int timesLeft = n;
         long aTime = 0;
         Timestamp ts;
@@ -100,7 +103,20 @@ public class TemporalProcessor {
                     tsQueue.remove();
                 }
                 if (tsQueue.size() >= n) {
-                    System.out.println("Event " + eventA + " happened for the " + Integer.toString(n) + "th time within " + Long.toString(millis) + " ms!");
+                    String ordinalSuffix;
+                    if (n == 1) {
+                        ordinalSuffix = "st";
+                    }
+                    else if (n == 2) {
+                        ordinalSuffix = "nd";
+                    }
+                    else if (n == 3) {
+                        ordinalSuffix = "rd";
+                    }
+                    else {
+                        ordinalSuffix = "th";
+                    }
+                    System.out.println("Event " + eventA + " happened for the " + Integer.toString(n) + ordinalSuffix + " time within " + Long.toString(millis) + " ms!");
 
                     tsQueue.remove();
                 }
