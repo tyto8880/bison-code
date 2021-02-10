@@ -1,6 +1,7 @@
 package kafkaRouting;
 
 import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -37,6 +38,12 @@ public class TopicConsumer {
         // Create the consumer and make it subscribe to the topic 'topic'
         kCons = new KafkaConsumer<String, String>(connectionProp);
         kCons.subscribe(Collections.singletonList(topic));
+    }
+
+    public ConsumerRecords<String,String> getConsumerRecords() {
+        ConsumerRecords<String,String> records = kCons.poll(1000);
+        kCons.commitAsync();
+        return records;
     }
 
     
