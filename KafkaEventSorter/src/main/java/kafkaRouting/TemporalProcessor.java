@@ -3,7 +3,7 @@ package kafkaRouting;
 public class TemporalProcessor {
     private TopicConsumer consumer;
     private ConsumerRecords<String,String> masterRecord;
-    private int testseconds = 1;
+    private int testseconds = 8;
 
     TemporalProcessor() {
         TopicConsumer consumer = new TopicConsumer("temporal-event");
