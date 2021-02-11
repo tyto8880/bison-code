@@ -7,7 +7,7 @@ import java.util.LinkedList;
 public class TemporalProcessor {
     private TopicConsumer consumer;
     private ConsumerRecords<String,String> masterRecord;
-    private int testMillis = 8000;
+    private int testMillis = 5000;
 
     TemporalProcessor() {
         this.consumer = new TopicConsumer("temporal-event");
@@ -50,34 +50,20 @@ public class TemporalProcessor {
                 ts = parseRecord(record.value());
                 // System.out.println("'" + ts.eventType + "'");
                 if ((!foundA) && (ts.eventType.equals(eventA))) {
-                    System.out.println("A event found");
+                    // System.out.println("A event found");
                     foundA = true;
                     aTime = ts.time;
                 }
-                if ((aTime - ts.time) > millis) {
-                    System.out.println("Timeout");
+                if ((ts.time - aTime) > millis) {
+                    // System.out.println("ts Timeout");
                     foundA = false;
                 }
                 if ((foundA) && ts.eventType.equals(eventB)) {
-                    System.out.println("B event found");
+                    // System.out.println("B event found");
                     foundA = false;
                     System.out.println(eventA + " happened at timestamp " + Long.toString(aTime) + " and " + eventB + " happened at timestamp " + Long.toString(ts.time) + " (within " + Long.toString(millis) + " ms)");
                 }
             }
-            // records.forEach(record -> {
-            //     Timestamp ts = parseRecord(record.value());
-            //     if (!foundA && ts.eventType == eventA) {
-            //         foundA = true;
-            //         aTime = ts.time;
-            //     }
-            //     if (aTime - ts.time > millis) {
-            //         foundA = false;
-            //     }
-            //     if (foundA && ts.eventType == eventB) {
-            //         foundA = false;
-            //         System.out.println(eventA + " happened at timestamp " + Long.toString(aTime) + " and " + eventB + " happened at timestamp " + Long.toString(ts.time) + " (within " + Long.toString(millis) + " ms)");
-            //     }
-            // });
         }
     }
     void multipleOccurences(String eventA, long millis, int n) {
@@ -96,11 +82,12 @@ public class TemporalProcessor {
             for (ConsumerRecord<String,String> record : records) {
                 ts = parseRecord(record.value());
                 if (ts.eventType.equals(eventA) && (tsQueue.size() == 0 || tsQueue.getLast().time != ts.time)) {
-                    // System.out.println("added an " + eventA + " at time " + Long.toString(ts.time));
                     tsQueue.add(ts);
+                    // System.out.println("added an " + eventA + " at time " + Long.toString(ts.time) + ", new queue size " + Integer.toString(tsQueue.size()));
                 }
-                if (tsQueue.getFirst().time - ts.time > millis) {
+                if (ts.time - tsQueue.getFirst().time > millis) {
                     tsQueue.remove();
+                    // System.out.println("mo timeout, new queue size " + Integer.toString(tsQueue.size()));
                 }
                 if (tsQueue.size() >= n) {
                     String ordinalSuffix;
