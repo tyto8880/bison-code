@@ -49,7 +49,7 @@ public class TemporalProcessor {
                 // System.out.println(record.value());
                 ts = parseRecord(record.value());
                 // System.out.println("'" + ts.eventType + "'");
-                if ((!foundA) && (ts.eventType.equals(eventA))) {
+                if (ts.eventType.equals(eventA)) {
                     // System.out.println("A event found");
                     foundA = true;
                     aTime = ts.time;
@@ -61,7 +61,7 @@ public class TemporalProcessor {
                 if ((foundA) && ts.eventType.equals(eventB)) {
                     // System.out.println("B event found");
                     foundA = false;
-                    System.out.println(eventA + " happened at timestamp " + Long.toString(aTime) + " and " + eventB + " happened at timestamp " + Long.toString(ts.time) + " (within " + Long.toString(millis) + " ms)");
+                    System.out.println(eventA + " happened at timestamp " + Long.toString(aTime) + " and " + eventB + " happened at timestamp " + Long.toString(ts.time) + " (within " + Long.toString(millis) + " ms)!");
                 }
             }
         }
