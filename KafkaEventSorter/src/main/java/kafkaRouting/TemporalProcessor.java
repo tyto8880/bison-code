@@ -85,27 +85,29 @@ public class TemporalProcessor {
                     tsQueue.add(ts);
                     // System.out.println("added an " + eventA + " at time " + Long.toString(ts.time) + ", new queue size " + Integer.toString(tsQueue.size()));
                 }
-                if (ts.time - tsQueue.getFirst().time > millis) {
-                    tsQueue.remove();
-                    // System.out.println("mo timeout, new queue size " + Integer.toString(tsQueue.size()));
-                }
-                if (tsQueue.size() >= n) {
-                    String ordinalSuffix;
-                    if (n == 1) {
-                        ordinalSuffix = "st";
+                if (tsQueue.size() > 0) {
+                    if (ts.time - tsQueue.getFirst().time > millis) {
+                        tsQueue.remove();
+                        // System.out.println("mo timeout, new queue size " + Integer.toString(tsQueue.size()));
                     }
-                    else if (n == 2) {
-                        ordinalSuffix = "nd";
-                    }
-                    else if (n == 3) {
-                        ordinalSuffix = "rd";
-                    }
-                    else {
-                        ordinalSuffix = "th";
-                    }
-                    System.out.println("Event " + eventA + " happened for the " + Integer.toString(n) + ordinalSuffix + " time within " + Long.toString(millis) + " ms!");
+                    if (tsQueue.size() >= n) {
+                        String ordinalSuffix;
+                        if (n == 1) {
+                            ordinalSuffix = "st";
+                        }
+                        else if (n == 2) {
+                            ordinalSuffix = "nd";
+                        }
+                        else if (n == 3) {
+                            ordinalSuffix = "rd";
+                        }
+                        else {
+                            ordinalSuffix = "th";
+                        }
+                        System.out.println("Event " + eventA + " happened for the " + Integer.toString(n) + ordinalSuffix + " time within " + Long.toString(millis) + " ms!");
 
-                    tsQueue.remove();
+                        tsQueue.remove();
+                    }
                 }
                 // A,,,,,A,,,AA
                 // A,,,,,A,A
