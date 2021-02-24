@@ -1,6 +1,2 @@
-kafkaRouting/Processor.class
-kafkaRouting/MainDataRouting$1.class
-kafkaRouting/ProduceData.class
-kafkaRouting/TemporalProcessor.class
 kafkaRouting/MainDataRouting.class
-kafkaRouting/Timestamp.class
+kafkaRouting/MainDataRouting$1.class

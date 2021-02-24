@@ -13,7 +13,7 @@ kafka_dir=/usr/share/kafka
 
 $kafka_dir/bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic all-event-data
 
-$kafka_dir/bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic temporal-event
+$kafka_dir/bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic type-A
 
 $kafka_dir/bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic type-B
 
@@ -26,3 +26,5 @@ $kafka_dir/bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication
 $kafka_dir/bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic type-F
 
 $kafka_dir/bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic type-pos
+
+$kafka_dir/bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic query-output
