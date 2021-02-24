@@ -1,7 +1,2 @@
 /home/erhodes/Documents/java/bison-code/KafkaEventSorter/src/main/java/kafkaRouting/MainDataRouting.java
-/home/erhodes/Documents/java/bison-code/KafkaEventSorter/src/main/java/kafkaRouting/AgentInterface.java
-/home/erhodes/Documents/java/bison-code/KafkaEventSorter/src/main/java/kafkaRouting/TopicConsumer.java
-/home/erhodes/Documents/java/bison-code/KafkaEventSorter/src/main/java/kafkaRouting/TemporalProcessor.java
-/home/erhodes/Documents/java/bison-code/KafkaEventSorter/src/main/java/kafkaRouting/AgentProducer.java
-/home/erhodes/Documents/java/bison-code/KafkaEventSorter/src/main/java/kafkaRouting/Processor.java
 /home/erhodes/Documents/java/bison-code/KafkaEventSorter/src/main/java/kafkaRouting/ProduceData.java

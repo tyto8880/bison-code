@@ -72,8 +72,8 @@ public class MainDataRouting {
 //
         int window_size = 10;
         long threshold = 3;
-        String eventA = "0";
-        mainDataStream.filter((k, v) -> k.equalsIgnoreCase(eventA))
+        String eventA = "a";
+        mainDataStream.filter((k, v) -> v.equalsIgnoreCase(eventA))
             .groupBy((key, value) -> value)
             .windowedBy(TimeWindows.of(Duration.ofSeconds(window_size)).advanceBy(Duration.ofSeconds(1)))
             .count()
@@ -81,22 +81,23 @@ public class MainDataRouting {
             .filter((k, v) -> v >= threshold)
             .to("query-output");
 
-        String eventB = "1";
-        mainDataStream.filter((k, v) -> k.equalsIgnoreCase(eventA) || k.equalsIgnoreCase(eventB))
-            .groupBy((k, v) -> v)
+        String eventB = "b";
+        mainDataStream.filter((k, v) -> v.equalsIgnoreCase(eventA) || v.equalsIgnoreCase(eventB))
+            .groupBy((k, v) -> k)
+            // .groupByKey()
             .windowedBy(TimeWindows.of(Duration.ofSeconds(window_size)).advanceBy(Duration.ofSeconds(5)))
             .aggregate(() -> 0L,
                     (String key, String value, Long acc) -> {
                         System.out.println(key + ":" + value + " " + Long.toString(acc));
-                        if (acc == 0L && key.equalsIgnoreCase(eventA)) {
+                        if (acc == 0L && value.equalsIgnoreCase(eventA)) {
                             System.out.println("1 " + key + ":" + value + " " + Long.toString(acc));
                             return -1L;
                         }
-                        else if (acc == -1L && key.equalsIgnoreCase(eventB)) {
+                        else if (acc == -1L && value.equalsIgnoreCase(eventB)) {
                             System.out.println("3" + key + ":" + value + " " + Long.toString(acc));
                             return 100L;
                         }
-                        return acc + 1;
+                        return acc;
                     },
                     // (String key, String value, Long acc) -> {
                 //     System.out.println(key + ":" + value);
