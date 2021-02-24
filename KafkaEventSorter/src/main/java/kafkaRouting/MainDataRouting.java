@@ -21,6 +21,7 @@ import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.*;
 import org.apache.kafka.streams.state.KeyValueStore;
+import org.apache.kafka.streams.state.WindowStore;
 
 import java.time.Duration;
 import java.util.LinkedList;
@@ -69,20 +70,63 @@ public class MainDataRouting {
 
 //        KStream<String, String> overflow = eventA;
 //
+        int window_size = 10;
         long threshold = 3;
-        mainDataStream.filter((k, v) -> k.equalsIgnoreCase("0"))
+        String eventA = "0";
+        mainDataStream.filter((k, v) -> k.equalsIgnoreCase(eventA))
             .groupBy((key, value) -> value)
-            .windowedBy(TimeWindows.of(Duration.ofSeconds(2)).advanceBy(Duration.ofSeconds(1)))
+            .windowedBy(TimeWindows.of(Duration.ofSeconds(window_size)).advanceBy(Duration.ofSeconds(1)))
             .count()
             .toStream((k, v) -> k.key())
             .filter((k, v) -> v >= threshold)
             .to("query-output");
 
-//            groupedStream.windowedBy(TimeWindows.of(Duration.ofSeconds(4)))
-//                .count()
-//                .toStream()
-//                    .filter((k, v) -> )
-        //, Produced.with(Serdes.serdeFrom(), Serdes.Long())
+        String eventB = "1";
+        mainDataStream.filter((k, v) -> k.equalsIgnoreCase(eventA) || k.equalsIgnoreCase(eventB))
+            .groupBy((k, v) -> v)
+            .windowedBy(TimeWindows.of(Duration.ofSeconds(window_size)).advanceBy(Duration.ofSeconds(5)))
+            .aggregate(() -> 0L,
+                    (String key, String value, Long acc) -> {
+                        System.out.println(key + ":" + value + " " + Long.toString(acc));
+                        if (acc == 0L && key.equalsIgnoreCase(eventA)) {
+                            System.out.println("1 " + key + ":" + value + " " + Long.toString(acc));
+                            return -1L;
+                        }
+                        else if (acc == -1L && key.equalsIgnoreCase(eventB)) {
+                            System.out.println("3" + key + ":" + value + " " + Long.toString(acc));
+                            return 100L;
+                        }
+                        return acc + 1;
+                    },
+                    // (String key, String value, Long acc) -> {
+                //     System.out.println(key + ":" + value);
+                //     if (acc == 0L && key.equalsIgnoreCase(eventA)) {
+                //         System.out.println("1" + key + ":" + value + " " + Long.toString(acc));
+                //         return -1L;
+                //     }
+                //     else if (acc == 0L && key.equalsIgnoreCase(eventB)) {
+                //         System.out.println("2" + key + ":" + value + " " + Long.toString(acc));
+                //         return -2L;
+                //     }
+                //     else if (acc == -1L && key.equalsIgnoreCase(eventB)) {
+                //         System.out.println("3" + key + ":" + value + " " + Long.toString(acc));
+                //         return 1L;
+                //     }
+                //     else if (acc == -2L && key.equalsIgnoreCase(eventA)) {
+                //         System.out.println("4" + key + ":" + value + " " + Long.toString(acc));
+                //         return 2L;
+                //     }
+                //     else {
+                //         System.out.println("5" + key + ":" + value + " " + Long.toString(acc));
+                //         return acc;
+                //     }
+                // },
+                Materialized.<String, Long, WindowStore<Bytes, byte[]>>as("time-windowed-aggregated-stream-store") /* state store name */
+                    .withValueSerde(Serdes.Long()) /* serde for aggregate value */
+            )
+            .toStream((Windowed<String> k, Long v) -> k.key())
+            .filter((String k, Long v) -> v > 0L)
+            .to("query-output");
 
         final Topology topology = builder.build();
         final KafkaStreams streams = new KafkaStreams(topology, props);
