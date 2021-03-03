@@ -29,12 +29,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
-/**
- * In this example, we implement a simple WordCount program using the high-level Streams DSL
- * that reads from a source topic "streams-plaintext-input", where the values of messages represent lines of text,
- * split each text line into words and then compute the word occurence histogram, write the continuous updated histogram
- * into a topic "streams-wordcount-output" where each record is an updated count of a single word.
- */
+
 public class MainDataRouting {
 
     public static void main(String[] args) throws Exception {
@@ -70,6 +65,12 @@ public class MainDataRouting {
 
 //        KStream<String, String> overflow = eventA;
 //
+/* ================================================================================================================== */
+/*                                                QUERY PROCESSING LOGIC                                              */
+/* ================================================================================================================== */
+
+    // +++++++++++++++++++++++++++++++++++++++++++ Temporal Processing +++++++++++++++++++++++++++++++++++++++++++
+        // Determine if event type A occurs 3 or more times within 1 second
         int window_size = 10;
         long threshold = 3;
         String eventA = "a";
@@ -79,8 +80,9 @@ public class MainDataRouting {
             .count()
             .toStream((k, v) -> k.key())
             .filter((k, v) -> v >= threshold)
-            .to("query-output");
+            .to("temporal-events");
 
+        // Determine if event type B occurs within 5 seconds of event A
         String eventB = "b";
         mainDataStream.filter((k, v) -> v.equalsIgnoreCase(eventA) || v.equalsIgnoreCase(eventB))
             .groupBy((k, v) -> k)
@@ -127,7 +129,66 @@ public class MainDataRouting {
             )
             .toStream((Windowed<String> k, Long v) -> k.key())
             .filter((String k, Long v) -> v > 0L)
-            .to("query-output");
+            .to("temporal-events");
+
+
+    // +++++++++++++++++++++++++++++++++++++++++++ Evaluation Processing +++++++++++++++++++++++++++++++++++++++++++
+        // Detect if event values exceed the 'value_threshold'
+        long value_threshold = 10;
+        mainDataStream.filter((k, v) -> Long.parseLong(v) > value_threshold)
+            .to("evaluation-events");
+
+
+        // Detect if the average of the last 'n' values for Event F is less than y
+//        String eventF = "f";
+//        mainDataStream.filter((k, v) -> k.equalsIgnoreCase(eventF))
+//            .groupBy((k, v) -> v)
+//            .windowedBy(TimeWindows.of(Duration.ofSeconds(window_size)).advanceBy(Duration.ofSeconds(1)))
+
+    // +++++++++++++++++++++++++++++++++++++++++++ Sequence Processing +++++++++++++++++++++++++++++++++++++++++++
+        // Detect when events occur in the order {A, B, C}
+        String eventC = "c";
+        mainDataStream.filter((k, v) -> v.equalsIgnoreCase(eventA) || v.equalsIgnoreCase(eventB)
+                                || v.equalsIgnoreCase(eventC))
+            .groupBy((k, v) -> k)
+            .windowedBy(TimeWindows.of(Duration.ofSeconds(window_size)).advanceBy(Duration.ofSeconds(10)))
+            .aggregate(() -> 0L,
+                    (String key, String value, Long acc) -> {
+                        if (acc == 0L && value.equalsIgnoreCase(eventA)) {
+                            System.out.println("Detected Event A: " + key + ":" + value);
+                            return 1L;
+                        }
+                        else if (acc == 1L) {
+                            if (value.equalsIgnoreCase(eventB)) {
+                                System.out.println("Found Sequence A, B: " + key + ":" + value);
+                                return 2L; }
+                            else if (value.equalsIgnoreCase(eventC)) {
+                                System.out.println("Found Sequence A, C: resetting flags.");
+                                return 0L;
+                            }
+                            System.out.println("Found Sequence A, A: investigating next potential sequence.");
+                            return 1L;
+                        }
+                        else if (acc == 2L) {
+                            if (value.equalsIgnoreCase(eventC)) {
+                                System.out.println("Found Sequence A, B, C! Final Event: " + key + ":" + value);
+                                return 3L;
+                            }
+                            else if (value.equalsIgnoreCase(eventB)) {
+                                System.out.println("Found Sequence A, B, B: resetting flags.");
+                                return 0L;
+                            }
+                            System.out.println("Found Sequence A, B, A: investigating next potential sequence.");
+                        }
+                        return acc;
+                    },
+                    Materialized.<String, Long, WindowStore<Bytes, byte[]>>as("time-windowed-aggregated-stream-store2") /* state store name */
+                            .withValueSerde(Serdes.Long()) /* serde for aggregate value */
+            )
+            .toStream((Windowed<String> k, Long v) -> k.key())
+            .filter((String k, Long v) -> v == 3L)
+            .to("sequence-events");
+
 
         final Topology topology = builder.build();
         final KafkaStreams streams = new KafkaStreams(topology, props);

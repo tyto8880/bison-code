@@ -30,6 +30,8 @@ public class ProduceData {
         // String[] eventData = {"N/A", "N/A", "N/A", "N/A", "170", "-22", "Lat: 40.0150 N   Long: 105.2705 W   Acc: 1"};
 
 
+        // Sends 2 events with a string payload to the main stream 'all-event-data' with 1 millisecond between them
+            // Commented out to test sequence event processing
         for(int i=0; i<2; i++) {
             String payload = "dog";
             ProducerRecord<String, String> record = new ProducerRecord<String, String>("all-event-data", "0", payload);

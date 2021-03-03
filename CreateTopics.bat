@@ -28,10 +28,10 @@ call bin\windows\kafka-topics.bat --create --zookeeper localhost:2181 --replicat
  --partitions 1 --topic type-D
 ::
 call bin\windows\kafka-topics.bat --create --zookeeper localhost:2181 --replication-factor 1^
- --partitions 1 --topic type-E
+ --partitions 1 --topic sequence-events
 ::
 call bin\windows\kafka-topics.bat --create --zookeeper localhost:2181 --replication-factor 1^
- --partitions 1 --topic type-F
+ --partitions 1 --topic evaluation-events
 ::
 call bin\windows\kafka-topics.bat --create --zookeeper localhost:2181 --replication-factor 1^
  --partitions 1 --topic type-pos
