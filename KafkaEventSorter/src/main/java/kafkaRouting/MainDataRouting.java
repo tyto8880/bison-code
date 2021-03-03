@@ -179,6 +179,7 @@ public class MainDataRouting {
                                 return 0L;
                             }
                             System.out.println("Found Sequence A, B, A: investigating next potential sequence.");
+                            return 1L;
                         }
                         return acc;
                     },
