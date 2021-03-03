@@ -186,7 +186,7 @@ public class MainDataRouting {
                             .withValueSerde(Serdes.Long()) /* serde for aggregate value */
             )
             .toStream((Windowed<String> k, Long v) -> k.key())
-            .filter((String k, Long v) -> v == 3L)
+            .filter((String k, Long v) -> v >= 3L)
             .to("sequence-events");
 
 
