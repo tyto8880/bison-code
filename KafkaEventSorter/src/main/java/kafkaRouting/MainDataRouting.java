@@ -152,19 +152,20 @@ public class MainDataRouting {
         String eventF = "eval";
         double avg_threshold = 5;
 
+        KTable<Windowed<String>,Long> count_table = mainDataStream.filter((k, v) -> k.equalsIgnoreCase(eventF))
+            .groupBy((k, v) -> "")
+            .windowedBy(TimeWindows.of(Duration.ofSeconds(window_size)).advanceBy(Duration.ofSeconds(advance_by)))
+            .count();
         mainDataStream.filter((k, v) -> k.equalsIgnoreCase(eventF))
             .groupBy((k, v) -> "")
             .windowedBy(TimeWindows.of(Duration.ofSeconds(window_size)).advanceBy(Duration.ofSeconds(advance_by)))
-            .aggregate(() -> AverageContainer(0.0, 0.0),
-                    (String key, String value, AverageContainer aggregate) -> {
-                        aggregate.count += 1;
-                        aggregate.sum += Integer.parseInt(value);
-                        return aggregate;
-                    },
-                    Materialized.<String, AverageContainer, WindowStore<Bytes, byte[]>>as("time-windowed-aggregated-stream-store3") /* state store name */
-                            .withValueSerde(Serdes.Integer()) /* serde for aggregate value */
+            .aggregate(() -> 0L,
+                    (String key, String value, Long aggregate) -> aggregate + Long.parseLong(value),
+                    Materialized.<String, Long, WindowStore<Bytes, byte[]>>as("time-windowed-aggregated-stream-store3") /* state store name */
+                            .withValueSerde(Serdes.Long()) /* serde for aggregate value */
             )
-            .toStream((Windowed<String> k, AverageContainer v) -> v.sum/v.count)
+            .join(count_table, (Long v1, Long v2) -> (double)v1/(double)v2)
+            .toStream((Windowed<String> k, Double v) -> k.key())
             .filter((String k, Double v) -> v >= avg_threshold)
             .to("evaluation-events");
 
@@ -259,7 +260,7 @@ public class MainDataRouting {
     }
 }
 
-public class AverageContainer {
+class AverageContainer {
     public double count;
     public double sum;
     public AverageContainer(double count, double sum) {
