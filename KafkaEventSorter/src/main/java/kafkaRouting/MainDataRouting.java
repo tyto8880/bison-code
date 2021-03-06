@@ -30,6 +30,7 @@ import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
 
+
 public class MainDataRouting {
 
     public static void main(String[] args) throws Exception {
@@ -71,12 +72,13 @@ public class MainDataRouting {
 
     // +++++++++++++++++++++++++++++++++++++++++++ Temporal Processing +++++++++++++++++++++++++++++++++++++++++++
         // Determine if event type A occurs 3 or more times within 1 second
-        int window_size = 10;
+        int window_size = 5;
+        int advance_by = 1;
         long threshold = 3;
         String eventA = "a";
         mainDataStream.filter((k, v) -> v.equalsIgnoreCase(eventA))
             .groupBy((key, value) -> value)
-            .windowedBy(TimeWindows.of(Duration.ofSeconds(window_size)).advanceBy(Duration.ofSeconds(1)))
+            .windowedBy(TimeWindows.of(Duration.ofSeconds(window_size)).advanceBy(Duration.ofSeconds(advance_by)))
             .count()
             .toStream((k, v) -> k.key())
             .filter((k, v) -> v >= threshold)
@@ -85,9 +87,9 @@ public class MainDataRouting {
         // Determine if event type B occurs within 5 seconds of event A
         String eventB = "b";
         mainDataStream.filter((k, v) -> v.equalsIgnoreCase(eventA) || v.equalsIgnoreCase(eventB))
-            .groupBy((k, v) -> k)
+            .groupBy((k, v) -> "")
             // .groupByKey()
-            .windowedBy(TimeWindows.of(Duration.ofSeconds(window_size)).advanceBy(Duration.ofSeconds(5)))
+            .windowedBy(TimeWindows.of(Duration.ofSeconds(window_size)).advanceBy(Duration.ofSeconds(advance_by)))
             .aggregate(() -> 0L,
                     (String key, String value, Long acc) -> {
                         System.out.println(key + ":" + value + " " + Long.toString(acc));
@@ -129,29 +131,53 @@ public class MainDataRouting {
             )
             .toStream((Windowed<String> k, Long v) -> k.key())
             .filter((String k, Long v) -> v > 0L)
-            .to("temporal-events");
+            .to("query-output");
 
 
     // +++++++++++++++++++++++++++++++++++++++++++ Evaluation Processing +++++++++++++++++++++++++++++++++++++++++++
         // Detect if event values exceed the 'value_threshold'
         long value_threshold = 10;
-        mainDataStream.filter((k, v) -> Long.parseLong(v) > value_threshold)
-            .to("evaluation-events");
+        mainDataStream.filter((k, v) -> {
+            try {
+                return Long.parseLong(v) > value_threshold;
+            }
+            catch(Exception e) {
+                return false;
+            }
+        }).to("evaluation-events");
 
 
         // Detect if the average of the last 'n' values for Event F is less than y
-//        String eventF = "f";
-//        mainDataStream.filter((k, v) -> k.equalsIgnoreCase(eventF))
-//            .groupBy((k, v) -> v)
-//            .windowedBy(TimeWindows.of(Duration.ofSeconds(window_size)).advanceBy(Duration.ofSeconds(1)))
+
+        String eventF = "eval";
+        double avg_threshold = 5;
+
+        mainDataStream.filter((k, v) -> k.equalsIgnoreCase(eventF))
+            .groupBy((k, v) -> "")
+            .windowedBy(TimeWindows.of(Duration.ofSeconds(window_size)).advanceBy(Duration.ofSeconds(advance_by)))
+            .aggregate(() -> AverageContainer(0.0, 0.0),
+                    (String key, String value, AverageContainer aggregate) -> {
+                        aggregate.count += 1;
+                        aggregate.sum += Integer.parseInt(value);
+                        return aggregate;
+                    },
+                    Materialized.<String, AverageContainer, WindowStore<Bytes, byte[]>>as("time-windowed-aggregated-stream-store3") /* state store name */
+                            .withValueSerde(Serdes.Integer()) /* serde for aggregate value */
+            )
+            .toStream((Windowed<String> k, AverageContainer v) -> v.sum/v.count)
+            .filter((String k, Double v) -> v >= avg_threshold)
+            .to("evaluation-events");
+
+
 
     // +++++++++++++++++++++++++++++++++++++++++++ Sequence Processing +++++++++++++++++++++++++++++++++++++++++++
         // Detect when events occur in the order {A, B, C}
         String eventC = "c";
+        String eventD = "d";
         mainDataStream.filter((k, v) -> v.equalsIgnoreCase(eventA) || v.equalsIgnoreCase(eventB)
-                                || v.equalsIgnoreCase(eventC))
-            .groupBy((k, v) -> k)
-            .windowedBy(TimeWindows.of(Duration.ofSeconds(window_size)).advanceBy(Duration.ofSeconds(10)))
+                                || v.equalsIgnoreCase(eventC) || v.equalsIgnoreCase(eventD))
+            .groupBy((k, v) -> "")
+            .windowedBy(TimeWindows.of(Duration.ofSeconds(window_size)).advanceBy(Duration.ofSeconds(advance_by)))
             .aggregate(() -> 0L,
                     (String key, String value, Long acc) -> {
                         if (acc == 0L && value.equalsIgnoreCase(eventA)) {
@@ -159,27 +185,46 @@ public class MainDataRouting {
                             return 1L;
                         }
                         else if (acc == 1L) {
-                            if (value.equalsIgnoreCase(eventB)) {
+                            if (value.equalsIgnoreCase(eventA)) {
+                                System.out.println("Found Sequence A, A: resetting flags.");
+                                return 1L;
+                            }
+                            else if (value.equalsIgnoreCase(eventB)) {
                                 System.out.println("Found Sequence A, B: " + key + ":" + value);
-                                return 2L; }
-                            else if (value.equalsIgnoreCase(eventC)) {
-                                System.out.println("Found Sequence A, C: resetting flags.");
+                                return 2L;
+                            }
+                            else {
+                                System.out.println("Found Sequence A, x: investigating next potential sequence.");
                                 return 0L;
                             }
-                            System.out.println("Found Sequence A, A: investigating next potential sequence.");
-                            return 1L;
                         }
                         else if (acc == 2L) {
                             if (value.equalsIgnoreCase(eventC)) {
                                 System.out.println("Found Sequence A, B, C! Final Event: " + key + ":" + value);
                                 return 3L;
                             }
-                            else if (value.equalsIgnoreCase(eventB)) {
-                                System.out.println("Found Sequence A, B, B: resetting flags.");
+                            else if (value.equalsIgnoreCase(eventA)) {
+                                System.out.println("Found Sequence A, B, A: investigating next potential sequence.");
+                                return 1L;
+                            }
+                            else {
+                                System.out.println("Found Sequence A, B, x: resetting flags.");
                                 return 0L;
                             }
-                            System.out.println("Found Sequence A, B, A: investigating next potential sequence.");
-                            return 1L;
+                        }
+                        else if (acc == 3L) {
+                            if (value.equalsIgnoreCase(eventD)) {
+                                System.out.println("Found Sequence A, B, C, D! Final Event: " + key + ":" + value);
+                                return 4L;
+                            }
+                            else if (value.equalsIgnoreCase(eventA)) {
+                                System.out.println("Found Sequence A, B, C, A: investigating next potential sequence.");
+                                return 1L;
+                            }
+                            else {
+                                System.out.println("Found Sequence A, B, C, x: resetting flags.");
+                                return 0L;
+                            }
                         }
                         return acc;
                     },
@@ -188,7 +233,7 @@ public class MainDataRouting {
             )
             .toStream((Windowed<String> k, Long v) -> k.key())
             .filter((String k, Long v) -> v >= 3L)
-            .to("sequence-events");
+            .to("query-output");
 
 
         final Topology topology = builder.build();
@@ -211,5 +256,14 @@ public class MainDataRouting {
             System.exit(1);
         }
         System.exit(0);
+    }
+}
+
+public class AverageContainer {
+    public double count;
+    public double sum;
+    public AverageContainer(double count, double sum) {
+        this.count = count;
+        this.sum = sum;
     }
 }
