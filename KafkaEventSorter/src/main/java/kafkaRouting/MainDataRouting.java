@@ -103,35 +103,12 @@ public class MainDataRouting {
                         }
                         return acc;
                     },
-                    // (String key, String value, Long acc) -> {
-                //     System.out.println(key + ":" + value);
-                //     if (acc == 0L && key.equalsIgnoreCase(eventA)) {
-                //         System.out.println("1" + key + ":" + value + " " + Long.toString(acc));
-                //         return -1L;
-                //     }
-                //     else if (acc == 0L && key.equalsIgnoreCase(eventB)) {
-                //         System.out.println("2" + key + ":" + value + " " + Long.toString(acc));
-                //         return -2L;
-                //     }
-                //     else if (acc == -1L && key.equalsIgnoreCase(eventB)) {
-                //         System.out.println("3" + key + ":" + value + " " + Long.toString(acc));
-                //         return 1L;
-                //     }
-                //     else if (acc == -2L && key.equalsIgnoreCase(eventA)) {
-                //         System.out.println("4" + key + ":" + value + " " + Long.toString(acc));
-                //         return 2L;
-                //     }
-                //     else {
-                //         System.out.println("5" + key + ":" + value + " " + Long.toString(acc));
-                //         return acc;
-                //     }
-                // },
                 Materialized.<String, Long, WindowStore<Bytes, byte[]>>as("time-windowed-aggregated-stream-store") /* state store name */
                     .withValueSerde(Serdes.Long()) /* serde for aggregate value */
             )
             .toStream((Windowed<String> k, Long v) -> k.key())
             .filter((String k, Long v) -> v > 0L)
-            .to("query-output");
+            .to("temporal-events");
 
 
     // +++++++++++++++++++++++++++++++++++++++++++ Evaluation Processing +++++++++++++++++++++++++++++++++++++++++++
@@ -149,25 +126,25 @@ public class MainDataRouting {
 
         // Detect if the average of the last 'n' values for Event F is less than y
 
-        String eventF = "eval";
-        double avg_threshold = 5;
-
-        KTable<Windowed<String>,Long> count_table = mainDataStream.filter((k, v) -> k.equalsIgnoreCase(eventF))
-            .groupBy((k, v) -> "")
-            .windowedBy(TimeWindows.of(Duration.ofSeconds(window_size)).advanceBy(Duration.ofSeconds(advance_by)))
-            .count();
-        mainDataStream.filter((k, v) -> k.equalsIgnoreCase(eventF))
-            .groupBy((k, v) -> "")
-            .windowedBy(TimeWindows.of(Duration.ofSeconds(window_size)).advanceBy(Duration.ofSeconds(advance_by)))
-            .aggregate(() -> 0L,
-                    (String key, String value, Long aggregate) -> aggregate + Long.parseLong(value),
-                    Materialized.<String, Long, WindowStore<Bytes, byte[]>>as("time-windowed-aggregated-stream-store3") /* state store name */
-                            .withValueSerde(Serdes.Long()) /* serde for aggregate value */
-            )
-            .join(count_table, (Long v1, Long v2) -> (double)v1/(double)v2)
-            .toStream((Windowed<String> k, Double v) -> k.key())
-            .filter((String k, Double v) -> v >= avg_threshold)
-            .to("evaluation-events");
+//        String eventF = "eval";
+//        double avg_threshold = 5;
+//
+//        KTable<Windowed<String>,Long> count_table = mainDataStream.filter((k, v) -> k.equalsIgnoreCase(eventF))
+//            .groupBy((k, v) -> "")
+//            .windowedBy(TimeWindows.of(Duration.ofSeconds(window_size)).advanceBy(Duration.ofSeconds(advance_by)))
+//            .count();
+//        mainDataStream.filter((k, v) -> k.equalsIgnoreCase(eventF))
+//            .groupBy((k, v) -> "")
+//            .windowedBy(TimeWindows.of(Duration.ofSeconds(window_size)).advanceBy(Duration.ofSeconds(advance_by)))
+//            .aggregate(() -> 0L,
+//                    (String key, String value, Long aggregate) -> aggregate + Long.parseLong(value),
+//                    Materialized.<String, Long, WindowStore<Bytes, byte[]>>as("time-windowed-aggregated-stream-store3") /* state store name */
+//                            .withValueSerde(Serdes.Long()) /* serde for aggregate value */
+//            )
+//            .join(count_table, (Long v1, Long v2) -> (double)v1/(double)v2)
+//            .toStream((Windowed<String> k, Double v) -> k.key())
+//            .filter((String k, Double v) -> v >= avg_threshold)
+//            .to("evaluation-events");
 
 
 
@@ -234,8 +211,75 @@ public class MainDataRouting {
             )
             .toStream((Windowed<String> k, Long v) -> k.key())
             .filter((String k, Long v) -> v >= 3L)
-            .to("query-output");
+            .to("sequence-events");
 
+    // ++++++++++++++++++++++++++++++++++++++++++++ Geospatial Processing +++++++++++++++++++++++++++++++++++++++++++
+        // Detect 2 objects within x feet of each other
+            // NOTE: Query assumes that all geospatial payloads will be keyed with 'geo'
+        Double d_thresh = 100.0;
+        String d1 = "a";
+        String d2 = "b";
+        KTable<Windowed<String>, String> a_dev_data = mainDataStream.filter((k, v) -> k.equalsIgnoreCase("geo") &&
+                                                    v.split("\\s+")[0].equalsIgnoreCase(d1))
+                .groupBy((k, v) -> "")
+                .windowedBy(TimeWindows.of(Duration.ofSeconds(window_size)).advanceBy(Duration.ofSeconds(advance_by)))
+                .aggregate(() -> "",
+                        ((k,v, acc) -> v)
+                );
+
+        KTable<Windowed<String>, String> b_dev_data = mainDataStream.filter((k, v) -> k.equalsIgnoreCase("geo") &&
+                                                    v.split("\\s+")[0].equalsIgnoreCase(d2))
+                .groupBy((k, v) -> "")
+                .windowedBy(TimeWindows.of(Duration.ofSeconds(window_size)).advanceBy(Duration.ofSeconds(advance_by)))
+                .aggregate(() -> "",
+                        ((k,v, acc) -> v)
+                );
+
+        a_dev_data.join(b_dev_data,
+                (v1, v2) -> {
+                    //TESTING
+                    System.out.println(v1);
+                    System.out.println(v2);
+
+                    String[] a_separator = v1.split("\\s+");
+                    System.out.println("Split successful");
+                    Double a_lat = Double.parseDouble(a_separator[1]);
+                    System.out.println("index 1 fine, a_lat: " + Double.toString(a_lat));
+                    Double a_lon = Double.parseDouble(a_separator[2]);
+                    System.out.println("index 2 fine, a_lat: " + Double.toString(a_lon));
+
+                    String[] b_separator = v2.split("\\s+");
+                    Double b_lat = Double.parseDouble(b_separator[1]);
+                    Double b_lon = Double.parseDouble(b_separator[2]);
+
+                    return Double.toString(Math.sqrt(Math.pow(b_lat - a_lat, 2) + Math.pow(b_lon - a_lon, 2)));
+                }
+                )
+                .toStream((Windowed<String> k, String v) -> k.key())
+                .filter((String k, String v) -> Double.parseDouble(v) <= d_thresh)
+                .to("geo-events");
+
+
+        // Detect when objects enter or leave a geofence with radius "rad" (in meters) and center "center"
+        Double rad = 10.0;
+        Double[] center = {0.0, 0.0};
+        mainDataStream.filter((key, value) -> key.equalsIgnoreCase("geo"))
+                .groupBy((k, v) -> "")
+                .windowedBy(TimeWindows.of(Duration.ofSeconds(window_size)).advanceBy(Duration.ofSeconds(advance_by)))
+                .aggregate(() -> Double.toString(Double.POSITIVE_INFINITY),
+                        (k, v, acc) -> {
+                            String[] separator = v.split("\\s+");
+                            Double lat = Double.parseDouble(separator[1]);
+                            Double lon = Double.parseDouble(separator[2]);
+                            return Double.toString(Math.min(Math.sqrt(Math.pow(lat - center[0], 2) +
+                                    Math.pow(lon - center[1], 2)), Double.parseDouble(acc)));
+                        }
+
+                )
+                .toStream((Windowed<String> k, String v) -> k.key())
+                .filter((String k, String v) -> Double.parseDouble(v) <= rad)
+                .to("geo-events");
+        
 
         final Topology topology = builder.build();
         final KafkaStreams streams = new KafkaStreams(topology, props);
