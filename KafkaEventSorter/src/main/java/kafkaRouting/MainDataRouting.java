@@ -246,11 +246,13 @@ public class MainDataRouting {
                     Double a_lat = Double.parseDouble(a_separator[1]);
                     System.out.println("index 1 fine, a_lat: " + Double.toString(a_lat));
                     Double a_lon = Double.parseDouble(a_separator[2]);
-                    System.out.println("index 2 fine, a_lat: " + Double.toString(a_lon));
+                    System.out.println("index 2 fine, a_lon: " + Double.toString(a_lon));
 
                     String[] b_separator = v2.split("\\s+");
                     Double b_lat = Double.parseDouble(b_separator[1]);
+                    System.out.println("index 1 fine, b_lat: " + Double.toString(b_lat));
                     Double b_lon = Double.parseDouble(b_separator[2]);
+                    System.out.println("index 2 fine, b_lon: " + Double.toString(b_lon));
 
                     return Double.toString(Math.sqrt(Math.pow(b_lat - a_lat, 2) + Math.pow(b_lon - a_lon, 2)));
                 }

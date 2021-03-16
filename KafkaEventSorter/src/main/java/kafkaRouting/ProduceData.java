@@ -32,11 +32,17 @@ public class ProduceData {
 
         // Sends 2 events with a string payload to the main stream 'all-event-data' with 1 millisecond between them
             // Commented out to test sequence event processing
-        for(int i=0; i<2; i++) {
-            String payload = "dog";
-            ProducerRecord<String, String> record = new ProducerRecord<String, String>("all-event-data", "0", payload);
-            kProd.send(record);
-            Thread.sleep(1); // Used to illustrate effective timestamping
+        for(int i=4; i<6; i++) {
+            String payload = "b " + Integer.toString(i) + " " + Integer.toString(i);
+            ProducerRecord<String, String> event = new ProducerRecord<String, String>("all-event-data", "geo", payload);
+            kProd.send(event);
+            // Thread.sleep(1); // Used to illustrate effective timestamping
+        }
+        for(int i=0; i<3; i++) {
+            String payload = "a " + Integer.toString(i) + " " + Integer.toString(i);
+            ProducerRecord<String, String> event = new ProducerRecord<String, String>("all-event-data", "geo", payload);
+            kProd.send(event);
+            // Thread.sleep(1); // Used to illustrate effective timestamping
         }
 
         kProd.close();
