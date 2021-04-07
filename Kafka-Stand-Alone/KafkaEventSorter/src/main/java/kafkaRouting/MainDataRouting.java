@@ -1,18 +1,11 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * This file defines a stream called mainDataStream that will hold all
+ * event data passed into the system. It also defines all stream processing
+ * that will be done on mainDataStream; and where the resultant records
+ * will be routed.
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Developed 8/2020 - 4/2021 by Jared Keefer, Erik Rhodes, and Tyler Tokumoto
+ * All rights reserved.
  */
 package kafkaRouting;
 
@@ -44,33 +37,12 @@ public class MainDataRouting {
         final StreamsBuilder builder = new StreamsBuilder();
         KStream<String, String> mainDataStream = builder.stream("all-event-data");
 
-//        KStream<String, String>[] branches = mainDataStream.branch(
-//                (key, value) -> key.equalsIgnoreCase("0"),
-//                (key, value) -> key.equalsIgnoreCase("1"),
-//                (key, value) -> key.equalsIgnoreCase("2"),
-//                (key, value) -> key.equalsIgnoreCase("3"),
-//                (key, value) -> key.equalsIgnoreCase("4"),
-//                (key, value) -> key.equalsIgnoreCase("5"),
-//                (key, value) -> key.equalsIgnoreCase("100"),
-//                (kay, value) -> true
-//        );
 
-//        KStream<String, String> eventA = mainDataStream.filter((k, v) -> v.equalsIgnoreCase("0"));
-
-//        builder.<String, String>stream("streams-plaintext-input")
-////               .flatMapValues(value -> Arrays.asList(value.toLowerCase(Locale.getDefault()).split("\\W+")))
-////               .groupBy((key, value) -> value)
-////               .count(Materialized.<String, Long, KeyValueStore<Bytes, byte[]>>as("counts-store"))
-////               .toStream()
-//               .to("streams-wordcount-output", Produced.with(Serdes.String(), Serdes.String()));
-
-//        KStream<String, String> overflow = eventA;
-//
 /* ================================================================================================================== */
 /*                                                QUERY PROCESSING LOGIC                                              */
 /* ================================================================================================================== */
 
-    // +++++++++++++++++++++++++++++++++++++++++++ Temporal Processing +++++++++++++++++++++++++++++++++++++++++++
+// +++++++++++++++++++++++++++++++++++++++++++ Temporal Processing +++++++++++++++++++++++++++++++++++++++++++
         // Determine if event type A occurs 3 or more times within 1 second
         int window_size = 5;
         int advance_by = 1;
@@ -88,7 +60,6 @@ public class MainDataRouting {
         String eventB = "b";
         mainDataStream.filter((k, v) -> v.equalsIgnoreCase(eventA) || v.equalsIgnoreCase(eventB))
             .groupBy((k, v) -> "")
-            // .groupByKey()
             .windowedBy(TimeWindows.of(Duration.ofSeconds(window_size)).advanceBy(Duration.ofSeconds(advance_by)))
             .aggregate(() -> 0L,
                     (String key, String value, Long acc) -> {
@@ -111,7 +82,7 @@ public class MainDataRouting {
             .to("temporal-events");
 
 
-    // +++++++++++++++++++++++++++++++++++++++++++ Evaluation Processing +++++++++++++++++++++++++++++++++++++++++++
+// +++++++++++++++++++++++++++++++++++++++++++ Evaluation Processing +++++++++++++++++++++++++++++++++++++++++++
         // Detect if event values exceed the 'value_threshold'
         long value_threshold = 10;
         mainDataStream.filter((k, v) -> {
@@ -123,32 +94,7 @@ public class MainDataRouting {
             }
         }).to("evaluation-events");
 
-
-        // Detect if the average of the last 'n' values for Event F is less than y
-
-//        String eventF = "eval";
-//        double avg_threshold = 5;
-//
-//        KTable<Windowed<String>,Long> count_table = mainDataStream.filter((k, v) -> k.equalsIgnoreCase(eventF))
-//            .groupBy((k, v) -> "")
-//            .windowedBy(TimeWindows.of(Duration.ofSeconds(window_size)).advanceBy(Duration.ofSeconds(advance_by)))
-//            .count();
-//        mainDataStream.filter((k, v) -> k.equalsIgnoreCase(eventF))
-//            .groupBy((k, v) -> "")
-//            .windowedBy(TimeWindows.of(Duration.ofSeconds(window_size)).advanceBy(Duration.ofSeconds(advance_by)))
-//            .aggregate(() -> 0L,
-//                    (String key, String value, Long aggregate) -> aggregate + Long.parseLong(value),
-//                    Materialized.<String, Long, WindowStore<Bytes, byte[]>>as("time-windowed-aggregated-stream-store3") /* state store name */
-//                            .withValueSerde(Serdes.Long()) /* serde for aggregate value */
-//            )
-//            .join(count_table, (Long v1, Long v2) -> (double)v1/(double)v2)
-//            .toStream((Windowed<String> k, Double v) -> k.key())
-//            .filter((String k, Double v) -> v >= avg_threshold)
-//            .to("evaluation-events");
-
-
-
-    // +++++++++++++++++++++++++++++++++++++++++++ Sequence Processing +++++++++++++++++++++++++++++++++++++++++++
+// +++++++++++++++++++++++++++++++++++++++++++ Sequence Processing +++++++++++++++++++++++++++++++++++++++++++
         // Detect when events occur in the order {A, B, C}
         String eventC = "c";
         String eventD = "d";
@@ -213,7 +159,7 @@ public class MainDataRouting {
             .filter((String k, Long v) -> v >= 3L)
             .to("sequence-events");
 
-    // ++++++++++++++++++++++++++++++++++++++++++++ Geospatial Processing +++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++ Geospatial Processing +++++++++++++++++++++++++++++++++++++++++++
         // Detect 2 objects within x feet of each other
             // NOTE: Query assumes that all geospatial payloads will be keyed with 'geo'
         Double d_thresh = 100.0;
@@ -281,7 +227,7 @@ public class MainDataRouting {
                 .toStream((Windowed<String> k, String v) -> k.key())
                 .filter((String k, String v) -> Double.parseDouble(v) <= rad)
                 .to("geo-events");
-        
+
 
         final Topology topology = builder.build();
         final KafkaStreams streams = new KafkaStreams(topology, props);
