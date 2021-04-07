@@ -40,7 +40,7 @@ This section details how to run the demo so that the funcitonality is clearly di
 - Start MainDataRouting.java  
 - Generate a console producer that will write to the 'all-event-data' topic/stream.   
 
-#### Demo: Temporal
+### Demo: Temporal
 There are two temporal use cases that are triggered by this prototype. If either of these occurs, a record of the event is passed to the 'temporal-events' topic. To view this behavior first generate a console consumer that subscribes to the 'temporal-events' topic; then follow the instructions detailed below.  
 1. Determine if event type A happens 3+ times within 1 second.
     * From the console producer, pass in 3 events of the form "<any_key_value>:A"
@@ -52,13 +52,13 @@ There are two temporal use cases that are triggered by this prototype. If either
     * If the two events were passed within the allotted threshold of 5 seconds, you will see a new record of this occurrence will appear in your console consumer.
      
 
-#### Demo: Evaluation
+### Demo: Evaluation
 This processing determines if the value of an event is strictly greater than the given threshold of 10.
 - Generate a console consumer that subscribes to the 'evaluation-events' topic.  
 - From the console producer, pass in an event of the form "<any_key_value>:<any_number>"
 - If the <any_number> field is strictly greater than 10, you will see a new record of this occurrence appear in your console consumer.
 
-#### Demo: Sequence
+### Demo: Sequence
 This processing determines if events of type {A, B, C} and {A, B, C, D} occur in the respective sequence.
 - Generate a console consumer that subscribes to the 'sequence-events' topic.  
 - From the console producer, pass in events of the form "<any_key_value>:<any_type>
@@ -66,7 +66,7 @@ This processing determines if events of type {A, B, C} and {A, B, C, D} occur in
 - If the events that were passed in follow the sequence {A, B, C} and/or {A, B, C, D}, a new record of this occurrence will appear in your console consumer.
     * NOTE: If the sequence {A, B, C, D} is passed in, you will see two resultant records in the console consumer. One for the intial trigger of encountering {A, B, C}. The second representing the found sequence of {A, B, C, D}
 
-#### Demo: Geospatial
+### Demo: Geospatial
 
 
 ### File and Implementation Explanation:
