@@ -43,30 +43,38 @@ This section details how to run the demo so that the funcitonality is clearly di
 ### Demo: Temporal
 There are two temporal use cases that are triggered by this prototype. If either of these occurs, a record of the event is passed to the 'temporal-events' topic. To view this behavior first generate a console consumer that subscribes to the 'temporal-events' topic; then follow the instructions detailed below.  
 1. Determine if event type A happens 3+ times within 1 second.
-    * From the console producer, pass in 3 events of the form "<any_key_value>:A"
+    * From the console producer, pass in 3 events of the form: <any_key_value>:A
     * If these events were passed in within the allotted time, you will see a new record of this occurrence appear in your console consumer.
 2. Determine if event type B happens within 5 seconds of event type A.
     * From the conole producer:
-        * Pass in an event of the form "<any_key_value>:A"
-        * Pass in an event of the form "<any_key_value>:B"
+        * Pass in an event of the form: <any_key_value>:A
+        * Pass in an event of the form: <any_key_value>:B
     * If the two events were passed within the allotted threshold of 5 seconds, you will see a new record of this occurrence will appear in your console consumer.
      
 
 ### Demo: Evaluation
 This processing determines if the value of an event is strictly greater than the given threshold of 10.
 - Generate a console consumer that subscribes to the 'evaluation-events' topic.  
-- From the console producer, pass in an event of the form "<any_key_value>:<any_number>"
+- From the console producer, pass in an event of the form: <any_key_value>:<any_number>
 - If the <any_number> field is strictly greater than 10, you will see a new record of this occurrence appear in your console consumer.
 
 ### Demo: Sequence
 This processing determines if events of type {A, B, C} and {A, B, C, D} occur in the respective sequence.
 - Generate a console consumer that subscribes to the 'sequence-events' topic.  
-- From the console producer, pass in events of the form "<any_key_value>:<any_type>
+- From the console producer, pass in events of the form: <any_key_value>:<any_type>
     * NOTE: the parameter <any_type> can be any string, but to trigger the occurrence it must follow the provided sequence of characters.
 - If the events that were passed in follow the sequence {A, B, C} and/or {A, B, C, D}, a new record of this occurrence will appear in your console consumer.
     * NOTE: If the sequence {A, B, C, D} is passed in, you will see two resultant records in the console consumer. One for the intial trigger of encountering {A, B, C}. The second representing the found sequence of {A, B, C, D}
 
 ### Demo: Geospatial
+There are two geospatial use cases that are triggered by this prototype. If either of these occur, a record of the event(s) is passed to the 'geo-events' topic. To view this behavior first generate a console consumer that subscribes to the 'geo-events' topic; then follow the instructions detailed below. 
+1. Detect 2 objects within 100 feet of each other.
+   * From the console producer, pass in events of the form: geo:<object_id> <Latitude> <Longitude>  
+      * NOTE: Each event data that you wish to have geospatial processing run on must have the key "geo"
+   * If two unique <object_id>s are published to 'all-event-data,' and their euclidean distance is <= 10 meters, you will see a new record of this occurrence appear in your console consumer
+2. Detect when objects enter or leave a geofence with a radius of 10 meters and center located at (0, 0).
+   * From the console producer, pass in events of the form: geo:<object_id> <Latitude> <Longitude>  
+   * 
 
 
 ## File and Implementation Explanation:
@@ -81,4 +89,4 @@ This file creates a new kafka producer that then sends data over the main data s
 
 
 ### MainDataRouting.java
-This file defines how Kafka sorts/reroutes each ingressed event to its proper topic. This is accomplished by first specifying the configuration of the data stream through a Properties object. Then a `KStream\<Key_Type, Value_Type\>` object is configured to use these properties. This KStream represents the main data stream from external devices into CEP solution. This data stream is then split into seven separate sub streams based on the value of the key parameter in each event payload. These substreams are stored into a KStream array and then routed to the desired topic using the KStream.to() command. This command routes stream data from the current stream, in this case a subset of the main data stream, to the specified topic. Therefore, this command also defines the topology of the system. The final portion of this file ensures that the routing service stops when the streams are closed.
+This file establishes a new data stream called 'all-event-data.' This stream holds all data that is passed into the prototype and awaiting processing. This file also handles all query processing on event data.
