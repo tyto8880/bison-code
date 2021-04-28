@@ -105,48 +105,48 @@ public class MainDataRouting {
             .aggregate(() -> 0L,
                     (String key, String value, Long acc) -> {
                         if (acc == 0L && value.equalsIgnoreCase(eventA)) {
-                            System.out.println("Detected Event A: " + key + ":" + value);
+                            // System.out.println("Detected Event A: " + key + ":" + value);
                             return 1L;
                         }
                         else if (acc == 1L) {
                             if (value.equalsIgnoreCase(eventA)) {
-                                System.out.println("Found Sequence A, A: resetting flags.");
+                                // System.out.println("Found Sequence A, A: resetting flags.");
                                 return 1L;
                             }
                             else if (value.equalsIgnoreCase(eventB)) {
-                                System.out.println("Found Sequence A, B: " + key + ":" + value);
+                                // System.out.println("Found Sequence A, B: " + key + ":" + value);
                                 return 2L;
                             }
                             else {
-                                System.out.println("Found Sequence A, x: investigating next potential sequence.");
+                                // System.out.println("Found Sequence A, x: investigating next potential sequence.");
                                 return 0L;
                             }
                         }
                         else if (acc == 2L) {
                             if (value.equalsIgnoreCase(eventC)) {
-                                System.out.println("Found Sequence A, B, C! Final Event: " + key + ":" + value);
+                                // System.out.println("Found Sequence A, B, C! Final Event: " + key + ":" + value);
                                 return 3L;
                             }
                             else if (value.equalsIgnoreCase(eventA)) {
-                                System.out.println("Found Sequence A, B, A: investigating next potential sequence.");
+                                // System.out.println("Found Sequence A, B, A: investigating next potential sequence.");
                                 return 1L;
                             }
                             else {
-                                System.out.println("Found Sequence A, B, x: resetting flags.");
+                                // System.out.println("Found Sequence A, B, x: resetting flags.");
                                 return 0L;
                             }
                         }
                         else if (acc == 3L) {
                             if (value.equalsIgnoreCase(eventD)) {
-                                System.out.println("Found Sequence A, B, C, D! Final Event: " + key + ":" + value);
+                                // System.out.println("Found Sequence A, B, C, D! Final Event: " + key + ":" + value);
                                 return 4L;
                             }
                             else if (value.equalsIgnoreCase(eventA)) {
-                                System.out.println("Found Sequence A, B, C, A: investigating next potential sequence.");
+                                // System.out.println("Found Sequence A, B, C, A: investigating next potential sequence.");
                                 return 1L;
                             }
                             else {
-                                System.out.println("Found Sequence A, B, C, x: resetting flags.");
+                                // System.out.println("Found Sequence A, B, C, x: resetting flags.");
                                 return 0L;
                             }
                         }
@@ -181,52 +181,73 @@ public class MainDataRouting {
                         ((k,v, acc) -> v)
                 );
 
-        a_dev_data.join(b_dev_data,
-                (v1, v2) -> {
-                    //TESTING
-                    System.out.println(v1);
-                    System.out.println(v2);
+        try {
+            a_dev_data.join(b_dev_data,
+                    (v1, v2) -> {
+                        //TESTING
+                        // System.out.println(v1);
+                        // System.out.println(v2);
 
-                    String[] a_separator = v1.split("\\s+");
-                    System.out.println("Split successful");
-                    Double a_lat = Double.parseDouble(a_separator[1]);
-                    System.out.println("index 1 fine, a_lat: " + Double.toString(a_lat));
-                    Double a_lon = Double.parseDouble(a_separator[2]);
-                    System.out.println("index 2 fine, a_lon: " + Double.toString(a_lon));
+                        try {
+                            String[] a_separator = v1.split("\\s+");
+                            // System.out.println("Split successful");
+                            Double a_lat = Double.parseDouble(a_separator[1]);
+                            // System.out.println("index 1 fine, a_lat: " + Double.toString(a_lat));
+                            Double a_lon = Double.parseDouble(a_separator[2]);
+                            // System.out.println("index 2 fine, a_lon: " + Double.toString(a_lon));
 
-                    String[] b_separator = v2.split("\\s+");
-                    Double b_lat = Double.parseDouble(b_separator[1]);
-                    System.out.println("index 1 fine, b_lat: " + Double.toString(b_lat));
-                    Double b_lon = Double.parseDouble(b_separator[2]);
-                    System.out.println("index 2 fine, b_lon: " + Double.toString(b_lon));
+                            String[] b_separator = v2.split("\\s+");
+                            Double b_lat = Double.parseDouble(b_separator[1]);
+                            // System.out.println("index 1 fine, b_lat: " + Double.toString(b_lat));
+                            Double b_lon = Double.parseDouble(b_separator[2]);
+                            // System.out.println("index 2 fine, b_lon: " + Double.toString(b_lon));
 
-                    return Double.toString(Math.sqrt(Math.pow(b_lat - a_lat, 2) + Math.pow(b_lon - a_lon, 2)));
-                }
-                )
-                .toStream((Windowed<String> k, String v) -> k.key())
-                .filter((String k, String v) -> Double.parseDouble(v) <= d_thresh)
-                .to("geo-events");
-
+                            return Double.toString(Math.sqrt(Math.pow(b_lat - a_lat, 2) + Math.pow(b_lon - a_lon, 2)));
+                        }
+                        catch(ArrayIndexOutOfBoundsException e) {
+                            System.out.println("Malformed message");
+                            return Double.toString(0.0);
+                        }
+                    }
+                    )
+                    .toStream((Windowed<String> k, String v) -> k.key())
+                    .filter((String k, String v) -> Double.parseDouble(v) <= d_thresh)
+                    .to("geo-events");
+        }
+        catch(ArrayIndexOutOfBoundsException e) {
+            System.out.println("Malformed message");
+        }
 
         // Detect when objects enter or leave a geofence with radius "rad" (in meters) and center "center"
         Double rad = 10.0;
         Double[] center = {0.0, 0.0};
-        mainDataStream.filter((key, value) -> key.equalsIgnoreCase("geo"))
-                .groupBy((k, v) -> "")
-                .windowedBy(TimeWindows.of(Duration.ofSeconds(window_size)).advanceBy(Duration.ofSeconds(advance_by)))
-                .aggregate(() -> Double.toString(Double.POSITIVE_INFINITY),
-                        (k, v, acc) -> {
-                            String[] separator = v.split("\\s+");
-                            Double lat = Double.parseDouble(separator[1]);
-                            Double lon = Double.parseDouble(separator[2]);
-                            return Double.toString(Math.min(Math.sqrt(Math.pow(lat - center[0], 2) +
-                                    Math.pow(lon - center[1], 2)), Double.parseDouble(acc)));
-                        }
+        try {
+            mainDataStream.filter((key, value) -> key.equalsIgnoreCase("geo"))
+                    .groupBy((k, v) -> "")
+                    .windowedBy(TimeWindows.of(Duration.ofSeconds(window_size)).advanceBy(Duration.ofSeconds(advance_by)))
+                    .aggregate(() -> Double.toString(Double.POSITIVE_INFINITY),
+                            (k, v, acc) -> {
+                                try {
+                                    String[] separator = v.split("\\s+");
+                                    Double lat = Double.parseDouble(separator[1]);
+                                    Double lon = Double.parseDouble(separator[2]);
+                                    return Double.toString(Math.min(Math.sqrt(Math.pow(lat - center[0], 2) +
+                                            Math.pow(lon - center[1], 2)), Double.parseDouble(acc)));
+                                }
+                                catch(ArrayIndexOutOfBoundsException e) {
+                                    System.out.println("Malformed message");
+                                    return Double.toString(Double.POSITIVE_INFINITY);
+                                }
+                            }
 
-                )
-                .toStream((Windowed<String> k, String v) -> k.key())
-                .filter((String k, String v) -> Double.parseDouble(v) <= rad)
-                .to("geo-events");
+                    )
+                    .toStream((Windowed<String> k, String v) -> k.key())
+                    .filter((String k, String v) -> Double.parseDouble(v) <= rad)
+                    .to("geo-events");
+        }
+        catch(ArrayIndexOutOfBoundsException e) {
+            System.out.println("Malformed message");
+        }
 
 
         final Topology topology = builder.build();
