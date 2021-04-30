@@ -1,0 +1,40 @@
+﻿{
+    "type": "record",
+    "namespace": "TrillXPF",
+    "name": "EventRecord",
+    "fields": [
+        {
+            "name": "DeviceID",
+            "type": "int"
+        },
+        {
+            "name": "Timestamp",
+            "type": "long"
+        },
+        {
+            "name": "EventID",
+            "type": "int"
+        },
+        {
+            "name": "EventData",
+            "type": {
+                "type": "record",
+                "name": "EventDataRecord",
+                "fields": [
+                    {
+                        "name": "Latitude",
+                        "type": "float"
+                    },
+                    {
+                        "name": "Longitude",
+                        "type": "float"
+                    },
+                    {
+                        "name": "Accuracy",
+                        "type": "int"
+                    }
+                ]
+            }
+        }
+    ]
+}

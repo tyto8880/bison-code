@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "TrillXPF": {
+      "commandName": "Project",
+      "remoteDebugEnabled": false
+    },
+    "WSL 2": {
+      "commandName": "WSL2",
+      "distributionName": "Ubuntu"
+    }
+  }
+}
