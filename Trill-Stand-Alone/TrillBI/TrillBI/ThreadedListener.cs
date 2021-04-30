@@ -5,7 +5,6 @@ using System.Net;
 using System.Net.Sockets;
 
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Microsoft.StreamProcessing;
 
 namespace TrillBI {
@@ -27,7 +26,6 @@ namespace TrillBI {
             byte[] bytes;
             IPAddress ipAddress = IPAddress.Parse(ip);
             IPEndPoint localEndpoint = new IPEndPoint(ipAddress, port);
-            int index = 0;
             observers = new List<IObserver<StreamEvent<Payload>>>();
 
             // make blocking socket server
@@ -41,7 +39,6 @@ namespace TrillBI {
 
                 while (true) {
                     Console.WriteLine("Waiting for a connection...");
-                    // Program is suspended while waiting for an incoming connection.  
                     Socket handler = server.Accept();
 
                     string bytesString = null;
@@ -51,22 +48,17 @@ namespace TrillBI {
                         int bytesRec = handler.Receive(bytes);
                         if (bytesRec > 0) {
                             bytesString += Encoding.ASCII.GetString(bytes, 0, bytesRec);
-                            //Console.WriteLine("Bytes rec'd: {0}\tData so far : {1}", bytesRec, bytesString);
                         } else {
                             break;
                         }
                     }
 
                     // Show the data on the console.  
-                    //Console.WriteLine("Text received : {0}", bytesString);
-                    //observer.OnNext(ParseInput(bytesString, index));
                     foreach (IObserver<StreamEvent<Payload>> observer in observers) {
                         Payload payload = ParseInput(bytesString);
                         observer.OnNext(StreamEvent.CreatePoint(payload.Timestamp.Ticks, payload));
-                        observer.OnNext(StreamEvent.CreatePunctuation<Payload>(payload.Timestamp.Ticks + TimeSpan.FromSeconds(0.5).Ticks));
+                        observer.OnNext(StreamEvent.CreatePunctuation<Payload>(payload.Timestamp.Ticks + 2));
                     }
-
-                    index += 1;
                 }
             } catch (Exception e) {
                 Console.WriteLine(e.ToString());

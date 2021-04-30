@@ -19,7 +19,7 @@ namespace TrillXPF
 		private int _DeviceID;
 		private long _Timestamp;
 		private int _EventID;
-		private TrillXPF.EventDataRecord _EventData;
+		private global::TrillXPF.EventDataRecord _EventData;
 		public virtual Schema Schema
 		{
 			get
@@ -60,7 +60,7 @@ namespace TrillXPF
 				this._EventID = value;
 			}
 		}
-		public TrillXPF.EventDataRecord EventData
+		public global::TrillXPF.EventDataRecord EventData
 		{
 			get
 			{
@@ -89,7 +89,7 @@ namespace TrillXPF
 			case 0: this.DeviceID = (System.Int32)fieldValue; break;
 			case 1: this.Timestamp = (System.Int64)fieldValue; break;
 			case 2: this.EventID = (System.Int32)fieldValue; break;
-			case 3: this.EventData = (TrillXPF.EventDataRecord)fieldValue; break;
+			case 3: this.EventData = (global::TrillXPF.EventDataRecord)fieldValue; break;
 			default: throw new AvroRuntimeException("Bad index " + fieldPos + " in Put()");
 			};
 		}

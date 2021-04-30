@@ -11,7 +11,7 @@ using Microsoft.StreamProcessing;
  */
 
 namespace TrillXPF {
-    class TrillBI {
+    class TrillXPF {
         public static void Main(string[] args) {
             // start networking
             string ip = "127.0.0.1";
@@ -36,20 +36,22 @@ namespace TrillXPF {
              * inputStream: Streamable that ingresses from source
              * Uses a FlushPolicy and Punctuations, which inject empty events in order to force the stream to process
              * Flush policy does not take precedence over windows, i.e. HoppingWindows retain their time frame when queries are being run
+             * DisorderPolicy specifies logic to follow when out-of-order events arrive; default behavior is to throw an exception
              */
-            //var inputStream = source.ToStreamable(periodicPunctuationPolicy: PeriodicPunctuationPolicy.Time((ulong) TimeSpan.FromSeconds(4).Ticks))
-            //    .HoppingWindowLifetime(TimeSpan.FromSeconds(10).Ticks, TimeSpan.FromSeconds(1.0).Ticks);
-            //var inputStream = source.ToStreamable(periodicPunctuationPolicy: PeriodicPunctuationPolicy.Time((ulong)TimeSpan.FromSeconds(4).Ticks));
             var inputStream = source.ToStreamable();
 
             // a sample query
-            //var query1 = inputStream.Where(e => e.EventID == 0);
+            var query1 = inputStream.Where(e => e.EventID == 0);
 
-            ////////////////////////////
+
+            ///////////////////////////
+            ///// BEGIN USE CASES /////
+            ///////////////////////////
+
 
             /*
-             * Temporal cases: use temporal stream
-             * window of time controlled with temporalWindow
+             * TEMPORAL CASES: use *temporal* stream
+             * control window with temporalWindow
              */
             var temporalWindow = 8.0;
             var temporal = inputStream
@@ -73,7 +75,7 @@ namespace TrillXPF {
                 .Select(e => new { e.leftID, e.rightID, e.leftEventID, e.rightEventID });
 
             // Linq-syntax analog of the above
-            var temporalFinalLinq = from left in temporalA
+            var temporal1Linq = from left in temporalA
                                     join right in temporalB on
                                     left.IsTemporal equals right.IsTemporal
                                     select new {
@@ -94,7 +96,7 @@ namespace TrillXPF {
             ////////////////////////////
 
             /*
-             * Spatial cases: use spatial stream
+             * SPATIAL CASES: use *spatial* stream
              * control window with spatialWindow
              */
             var spatialWindow = 30.0;
@@ -134,7 +136,7 @@ namespace TrillXPF {
             ////////////////////////////
 
             /*
-             * Sequential cases
+             * SEQUENTIAL CASES
              * control window with seqWindow
              */
 
@@ -144,37 +146,37 @@ namespace TrillXPF {
             /*
              * 1: Detect when event A occurs, followed by event B, followed by event C
              */
-            //var sequence1 = sequence.FollowedByImmediate(
-            //    (event1) => event1.EventID == 0,
-            //    (event2) => event2.EventID == 1,
-            //    (first, second) => second,
-            //    TimeSpan.FromSeconds(seqWindow).Ticks);
-            //    .FollowedByImmediate(
-            //    sequence,
-            //    (event2) => event2.EventID == 1,
-            //    (event3) => event3.EventID == 2,
-            //    (second, third) => third,
-            //    TimeSpan.FromSeconds(seqWindow).Ticks);
+            var sequence1 = sequence.FollowedByImmediate(
+                (event1) => event1.EventID == 0,
+                (event2) => event2.EventID == 1,
+                (first, second) => second,
+                TimeSpan.FromSeconds(seqWindow).Ticks)
+                .FollowedByImmediate(
+                sequence,
+                (event2) => event2.EventID == 1,
+                (event3) => event3.EventID == 2,
+                (second, third) => third,
+                TimeSpan.FromSeconds(seqWindow).Ticks);
 
             /*
              * 2: Detect when event A occurs, followed by event B or event C, followed by event D
              */
-            //var sequence2 = sequence.FollowedByImmediate(
-            //    (event1) => event1.EventID == 0,
-            //    (event2) => event2.EventID == 1 || event2.EventID == 2,
-            //    (first, second) => second,
-            //    TimeSpan.FromSeconds(seqWindow).Ticks)
-            //    .FollowedByImmediate(
-            //    sequence,
-            //    (event2) => true,
-            //    (event3) => event3.EventID == 3,
-            //    (second, third) => third,
-            //    TimeSpan.FromSeconds(seqWindow).Ticks);
+            var sequence2 = sequence.FollowedByImmediate(
+                (event1) => event1.EventID == 0,
+                (event2) => event2.EventID == 1 || event2.EventID == 2,
+                (first, second) => second,
+                TimeSpan.FromSeconds(seqWindow).Ticks)
+                .FollowedByImmediate(
+                sequence,
+                (event2) => true,
+                (event3) => event3.EventID == 3,
+                (second, third) => third,
+                TimeSpan.FromSeconds(seqWindow).Ticks);
 
             ////////////////////////////
 
             /*
-             * Evaluation cases
+             * EVALUATION CASES
              * value to compare is evalThreshold
              * control window with evalWindow
              */
@@ -184,6 +186,12 @@ namespace TrillXPF {
                 .HoppingWindowLifetime(TimeSpan.FromSeconds(evalWindow).Ticks, TimeSpan.FromSeconds(1.0).Ticks);
 
             //var evaluation1 = evaluation.Where(e => Int32.Parse(e.EventData) > evalThreshold);
+            
+            
+            ///////////////////////////
+            ////// END USE CASES //////
+            ///////////////////////////
+            
 
             /*
              * Egress: each stream query is egressed to an Observable
@@ -208,7 +216,7 @@ namespace TrillXPF {
 
             // Spatial output
             //spatialLat.ToStreamEventObservable().Where(e => e.IsData).ForEachAsync(m => Console.WriteLine("Events " + m));
-            spatial1.ToStreamEventObservable().Where(e => e.IsData).ForEachAsync(m => Console.WriteLine("Events " + m.Payload.leftID + " and " + m.Payload.rightID + " have a lat/long diff of (" + m.Payload.latDiff + ", " + m.Payload.longDiff + ")"));
+            spatial1.ToStreamEventObservable().Where(e => e.IsData).ForEachAsync(m => Console.WriteLine("Devices " + m.Payload.leftID + " and " + m.Payload.rightID + " have a lat/long diff of (" + m.Payload.latDiff + ", " + m.Payload.longDiff + ")"));
 
             // Sequence output
             //sequence1.ToStreamEventObservable().Where(e => e.IsData).ForEachAsync(m => Console.WriteLine(m.StartTime + ", " + m.EndTime));

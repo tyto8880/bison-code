@@ -32,9 +32,6 @@ namespace TrillBI {
                     return Disposable.Create(() => Console.WriteLine("Unsubscribed"));
                 });
 
-            //source.Subscribe(e => Console.WriteLine(e));
-            //Console.WriteLine(DateTimeOffset.Parse("2021-02-10T10:46:30.104475").Ticks);
-
             /*
              * inputStream: Streamable that ingresses from source
              * Uses a FlushPolicy and Punctuations, which inject empty events in order to force the stream to process
@@ -44,13 +41,17 @@ namespace TrillBI {
                 DisorderPolicy.Drop());
 
             // a sample query
-            //var query1 = inputStream.Where(e => e.EventID == 0);
+            var query1 = inputStream.Where(e => e.EventID == 0);
 
-            ////////////////////////////
+
+            ///////////////////////////
+            ///// BEGIN USE CASES /////
+            ///////////////////////////
+
 
             /*
-             * Temporal cases: use temporal stream
-             * window of time controlled with temporalWindow
+             * TEMPORAL CASES: use *temporal* stream
+             * control window with temporalWindow
              */
             var temporalWindow = 8.0;
             var temporal = inputStream
@@ -135,7 +136,7 @@ namespace TrillBI {
             ////////////////////////////
 
             /*
-             * Sequential cases
+             * SEQUENTIAL CASES
              * control window with seqWindow
              */
 
@@ -175,7 +176,7 @@ namespace TrillBI {
             ////////////////////////////
 
             /*
-             * Evaluation cases
+             * EVALUATION CASES
              * value to compare is evalThreshold
              * control window with evalWindow
              */
@@ -184,7 +185,13 @@ namespace TrillBI {
             var evaluation = inputStream
                 .HoppingWindowLifetime(TimeSpan.FromSeconds(evalWindow).Ticks, TimeSpan.FromSeconds(1.0).Ticks);
             
-            var evaluation1 = evaluation.Where(e => Int32.Parse(e.EventData) > evalThreshold);
+            //var evaluation1 = evaluation.Where(e => Int32.Parse(e.EventData) > evalThreshold);
+
+
+            ///////////////////////////
+            ////// END USE CASES //////
+            ///////////////////////////
+
 
             /*
              * Egress: each stream query is egressed to an Observable
@@ -192,7 +199,6 @@ namespace TrillBI {
              * Constructor parameters (`(start, end, payload)`) determine the data to pull from the query
              * action code goes in ForEachAsync block
              */
-
             inputStream.ToStreamEventObservable().Where(e => e.IsData).ForEachAsync(m => Console.WriteLine("Events detected! " + m.Payload.EventData));
 
             // Temporal output
@@ -209,7 +215,7 @@ namespace TrillBI {
             //    });
 
             // Spatial output
-            spatial1.ToStreamEventObservable().Where(e => e.IsData).ForEachAsync(m => Console.WriteLine(m));
+            spatial1.ToStreamEventObservable().Where(e => e.IsData).ForEachAsync(m => Console.WriteLine("Devices " + m.Payload.leftID + " and " + m.Payload.rightID + " have a lat/long diff of (" + m.Payload.latDiff + ", " + m.Payload.longDiff + ")"));
 
             // Sequence output
             //sequence1.ToStreamEventObservable().Where(e => e.IsData).ForEachAsync(m => Console.WriteLine(m.StartTime + ", " + m.EndTime));

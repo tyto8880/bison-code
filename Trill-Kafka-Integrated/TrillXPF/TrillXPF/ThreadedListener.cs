@@ -1,17 +1,12 @@
 ﻿using System;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Collections.Generic;
-
-using System.Text.Json;
 
 using Microsoft.StreamProcessing;
 using Confluent.Kafka;
 using Confluent.Kafka.SyncOverAsync;
 using Confluent.SchemaRegistry;
 using Confluent.SchemaRegistry.Serdes;
-using Avro;
-using Avro.Generic;
 
 namespace TrillXPF {
     class ThreadedListener {
@@ -59,7 +54,6 @@ namespace TrillXPF {
                     while (true) {
                         try {
                             var consumeResult = consumer.Consume(cts.Token);
-                            Console.WriteLine("test");
                             var message = consumeResult.Message.Value;
                             foreach (IObserver<StreamEvent<Payload>> observer in observers) {
                                 Payload payload = new Payload(message.DeviceID, message.Timestamp, (short) message.EventID, new Location(message.EventData.Latitude, message.EventData.Longitude, message.EventData.Accuracy));
